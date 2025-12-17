@@ -1,0 +1,43 @@
+<svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#465fff;stop-opacity:0.1" />
+      <stop offset="50%" style="stop-color:#0ba5ec;stop-opacity:0.05" />
+      <stop offset="100%" style="stop-color:#7a5af8;stop-opacity:0.1" />
+    </linearGradient>
+    
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(70, 95, 255, 0.1)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1920" height="1080" fill="url(#grad1)"/>
+  
+  <!-- Grid Pattern -->
+  <rect width="1920" height="1080" fill="url(#grid)"/>
+  
+  <!-- Decorative Circles -->
+  <circle cx="300" cy="200" r="150" fill="rgba(70, 95, 255, 0.08)"/>
+  <circle cx="1600" cy="800" r="200" fill="rgba(11, 165, 236, 0.08)"/>
+  <circle cx="1700" cy="300" r="120" fill="rgba(122, 90, 248, 0.08)"/>
+  <circle cx="200" cy="900" r="180" fill="rgba(70, 95, 255, 0.06)"/>
+  
+  <!-- Geometric Shapes -->
+  <rect x="1400" y="100" width="100" height="100" rx="10" fill="rgba(70, 95, 255, 0.05)" transform="rotate(15 1450 150)"/>
+  <rect x="100" y="500" width="80" height="80" rx="8" fill="rgba(11, 165, 236, 0.05)" transform="rotate(-20 140 540)"/>
+  
+  <!-- Dots Pattern -->
+  <g opacity="0.3">
+    <circle cx="500" cy="400" r="3" fill="#465fff"/>
+    <circle cx="800" cy="600" r="3" fill="#0ba5ec"/>
+    <circle cx="1200" cy="300" r="3" fill="#7a5af8"/>
+    <circle cx="1500" cy="500" r="3" fill="#465fff"/>
+    <circle cx="400" cy="700" r="3" fill="#0ba5ec"/>
+    <circle cx="1100" cy="800" r="3" fill="#7a5af8"/>
+  </g>
+  
+  <!-- Abstract Lines -->
+  <path d="M 0 400 Q 400 300 800 400 T 1600 400" stroke="rgba(70, 95, 255, 0.1)" stroke-width="2" fill="none"/>
+  <path d="M 0 600 Q 500 500 1000 600 T 2000 600" stroke="rgba(11, 165, 236, 0.1)" stroke-width="2" fill="none"/>
+</svg>

@@ -1,0 +1,39 @@
+﻿
+> free-nextjs-admin-dashboard@2.0.2 build
+> next build
+
+   Γû▓ Next.js 15.5.6
+   - Experiments (use with caution):
+     Γ£ô optimizeCss
+     ┬╖ optimizePackageImports
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully in 15.7s
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+node.exe : [Error [PageNotFoundError]: 
+Cannot find module for page: 
+/charts/bar-chart] {
+At D:\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : 
+NotSpecified:     ([Error 
+[PageNot...ts/bar-chart] {:Strin    g) [], 
+RemoteException
+    + FullyQualifiedErrorId : 
+NativeCommandE    rror
+ 
+  code: 'ENOENT'
+}
+[Error [PageNotFoundError]: Cannot find 
+module for page: /charts/line-chart] {
+  code: 'ENOENT'
+}
+
+> Build error occurred
+[Error: Failed to collect page data for 
+/charts/bar-chart] {
+  type: 'Error'
+}

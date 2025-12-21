@@ -71,21 +71,21 @@ const Pagination: React.FC<PaginationProps> = ({
   };
 
   const pageButtonClass = (page: number | string) => {
-    const baseClass = 'flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-all duration-200';
-    
+    const baseClass = 'flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all duration-200 border';
+
     if (page === currentPage) {
-      return twMerge(baseClass, 'bg-brand-500 text-white shadow-md');
+      return twMerge(baseClass, 'bg-brand-500 border-brand-500 text-white shadow-md hover:bg-brand-600');
     }
-    
+
     if (page === '...') {
-      return twMerge(baseClass, 'cursor-default text-gray-400');
+      return twMerge(baseClass, 'cursor-default border-transparent text-gray-400 hover:bg-transparent');
     }
-    
-    return twMerge(baseClass, 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800');
+
+    return twMerge(baseClass, 'border-gray-200 bg-white text-gray-700 hover:border-brand-500 hover:text-brand-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-brand-500');
   };
 
   return (
-    <div className={twMerge('flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between', className)}>
+    <div className={twMerge('flex flex-col gap-6 items-center sm:flex-row sm:justify-center', className)}>
       {/* Items per page selector */}
       {showItemsPerPage && onItemsPerPageChange && (
         <div className="flex items-center gap-2">
@@ -103,12 +103,12 @@ const Pagination: React.FC<PaginationProps> = ({
       )}
 
       {/* Page numbers */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         {/* Previous button */}
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition hover:border-brand-500 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
           aria-label="Previous page"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,7 +134,7 @@ const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition hover:border-brand-500 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
           aria-label="Next page"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

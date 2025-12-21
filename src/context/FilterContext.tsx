@@ -28,6 +28,7 @@ const defaultFilters: JobFilters = {
   salaryRange: { min: 0, max: 100000000 },
   experienceLevels: [],
   jobTypes: [],
+  jobLevels: [],
   companySize: [],
   postedWithin: 'all',
   searchQuery: '',

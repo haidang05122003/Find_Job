@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 
 const FeaturesSection: React.FC = () => {
   const features = [
@@ -10,10 +11,10 @@ const FeaturesSection: React.FC = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       ),
-      title: 'Tìm kiếm thông minh',
-      description: 'Công nghệ AI giúp bạn tìm được công việc phù hợp nhất với kỹ năng và kinh nghiệm',
+      title: 'Tìm kiếm nhanh chóng',
+      description: 'Giúp bạn tìm được công việc phù hợp nhất với kỹ năng và kinh nghiệm',
       color: 'from-blue-500 to-cyan-500',
-
+      link: '/jobs',
     },
     {
       icon: (
@@ -24,7 +25,7 @@ const FeaturesSection: React.FC = () => {
       title: 'Ứng tuyển nhanh chóng',
       description: 'Chỉ với một cú click, hồ sơ của bạn sẽ được gửi đến nhà tuyển dụng ngay lập tức',
       color: 'from-purple-500 to-pink-500',
-
+      link: '/jobs',
     },
     {
       icon: (
@@ -33,20 +34,20 @@ const FeaturesSection: React.FC = () => {
         </svg>
       ),
       title: 'Bảo mật tuyệt đối',
-      description: 'Thông tin cá nhân của bạn được bảo vệ với công nghệ mã hóa tiên tiến nhất',
+      description: 'Thông tin cá nhân của bạn được bảo vệ với công nghệ mã hóa',
       color: 'from-green-500 to-emerald-500',
-
+      link: '/privacy',
     },
     {
       icon: (
         <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
       ),
-      title: 'Thông báo realtime',
-      description: 'Nhận thông báo ngay khi có công việc mới phù hợp với bạn',
+      title: 'Chat realtime',
+      description: 'Chat trực tiếp với nhà tuyển dụng theo thời gian thực',
       color: 'from-orange-500 to-red-500',
-
+      link: '/messages',
     },
   ];
 
@@ -74,33 +75,35 @@ const FeaturesSection: React.FC = () => {
               className="group relative animate-fade-in-stagger h-full"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-8 transition-all duration-300 hover:scale-105 hover:shadow-2xl dark:border-gray-800 dark:bg-gray-900 h-full flex flex-col">
-                {/* Gradient Background on Hover */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 transition-opacity duration-300 group-hover:opacity-10`} />
+              <Link href={feature.link} className='block h-full'>
+                <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-8 transition-all duration-300 hover:scale-105 hover:shadow-2xl dark:border-gray-800 dark:bg-gray-900 h-full flex flex-col">
+                  {/* Gradient Background on Hover */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 transition-opacity duration-300 group-hover:opacity-10`} />
 
-                {/* Icon */}
-                <div className={`relative mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${feature.color} text-white shadow-lg`}>
-                  {feature.icon}
+                  {/* Icon */}
+                  <div className={`relative mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${feature.color} text-white shadow-lg`}>
+                    {feature.icon}
+                  </div>
+
+
+
+                  {/* Content */}
+                  <h3 className="relative mb-3 text-xl font-bold text-gray-900 dark:text-white">
+                    {feature.title}
+                  </h3>
+                  <p className="relative text-sm text-gray-600 dark:text-gray-400 flex-1">
+                    {feature.description}
+                  </p>
+
+                  {/* Arrow Icon */}
+                  <div className="relative mt-4 flex items-center text-sm font-medium text-brand-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:text-brand-400">
+                    Tìm hiểu thêm
+                    <svg className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
-
-
-
-                {/* Content */}
-                <h3 className="relative mb-3 text-xl font-bold text-gray-900 dark:text-white">
-                  {feature.title}
-                </h3>
-                <p className="relative text-sm text-gray-600 dark:text-gray-400 flex-1">
-                  {feature.description}
-                </p>
-
-                {/* Arrow Icon */}
-                <div className="relative mt-4 flex items-center text-sm font-medium text-brand-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:text-brand-400">
-                  Tìm hiểu thêm
-                  <svg className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
+              </Link>
             </div>
           ))}
         </div>

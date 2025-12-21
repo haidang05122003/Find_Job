@@ -1,12 +1,12 @@
 import { BaseService } from './base.service';
 import type { BaseResponse } from '@/types/api';
-import type { UserProfile } from '@/types/user';
+import type { UserProfile, UserRole } from '@/types/user';
 
 /**
  * User profile update data
  */
 export interface UserProfileUpdate {
-    name?: string;
+    fullName?: string;
     phone?: string;
     bio?: string;
     avatarUrl?: string;
@@ -14,6 +14,19 @@ export interface UserProfileUpdate {
         city: string;
         country: string;
     };
+}
+
+interface BackendUserResponse {
+    id: number;
+    email: string;
+    fullName: string;
+    username: string;
+    avatarUrl?: string;
+    roles?: string[];
+    role?: string;
+    phone?: string;
+    status?: string;
+    isCompanyOwner?: boolean;
 }
 
 /**
@@ -25,7 +38,7 @@ class UserService extends BaseService {
      * Get current authenticated user profile
      */
     async getCurrentUser(): Promise<BaseResponse<UserProfile>> {
-        const response = await this.get<any>('/users/me');
+        const response = await this.get<BackendUserResponse>('/users/me');
 
         if (response.success && response.data) {
             // Transform backend response to UserProfile
@@ -37,15 +50,19 @@ class UserService extends BaseService {
                 fullName: backendUser.fullName,
                 username: backendUser.username,
                 avatarUrl: backendUser.avatarUrl,
-                roles: backendUser.roles || (backendUser.role ? [backendUser.role] : []),
-                activeRole: (backendUser.roles && backendUser.roles.length > 0) ? backendUser.roles[0] : backendUser.role,
+                roles: (backendUser.roles || (backendUser.role ? [backendUser.role] : [])) as UserRole[],
+                activeRole: ((backendUser.roles && backendUser.roles.length > 0) ? backendUser.roles[0] : backendUser.role) as UserRole,
+                role: ((backendUser.roles && backendUser.roles.length > 0) ? backendUser.roles[0] : backendUser.role) as string,
+                phone: backendUser.phone,
+                status: backendUser.status,
+                isCompanyOwner: backendUser.isCompanyOwner,
                 createdAt: new Date(),
                 updatedAt: new Date(),
             };
             return { ...response, data: userProfile };
         }
 
-        return response;
+        return response as unknown as BaseResponse<UserProfile>;
     }
 
     /**

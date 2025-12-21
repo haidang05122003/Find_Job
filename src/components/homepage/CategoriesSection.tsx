@@ -22,7 +22,9 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({
 
   const handleCategoryClick = (category: Category) => {
     updateFilter('category', category.name);
-    router.push('/jobs');
+    const params = new URLSearchParams();
+    params.set('categories', category.name);
+    router.push(`/jobs?${params.toString()}`);
   };
 
   return (

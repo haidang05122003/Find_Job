@@ -1,36 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useRouter } from "next/navigation";
-import { hrService, JobPostRequest } from "@/services/hr.service";
-import { categoryService, Category } from "@/services/category.service";
-import { useToast } from "@/context/ToastContext";
+import React from "react";
+import { Controller } from "react-hook-form";
 import ComponentCard from "../common/ComponentCard";
 import RichTextEditor from "../ui/editor/RichTextEditor";
-
-// Schema validation
-const jobSchema = z.object({
-    title: z.string().min(5, "Tiêu đề phải có ít nhất 5 ký tự"),
-    categoryId: z.string().min(1, "Vui lòng chọn ngành nghề"),
-    location: z.string().min(1, "Vui lòng nhập Tỉnh/Thành phố"),
-    address: z.string().min(5, "Vui lòng nhập địa chỉ chi tiết"),
-    salaryMin: z.number().min(0, "Mức lương không hợp lệ"),
-    salaryMax: z.number().min(0, "Mức lương không hợp lệ"),
-    description: z.string().min(20, "Mô tả phải có ít nhất 20 ký tự"),
-    requirements: z.string().min(20, "Yêu cầu phải có ít nhất 20 ký tự"),
-    benefits: z.string().optional(),
-    employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"]),
-    workMethod: z.enum(["ONLINE", "OFFLINE", "HYBRID"]),
-    experience: z.string().min(1, "Vui lòng nhập kinh nghiệm"),
-    quantity: z.number().min(1, "Số lượng phải lớn hơn 0"),
-    gender: z.enum(["MALE", "FEMALE", "ANY"]),
-    deadline: z.string().min(1, "Vui lòng chọn hạn nộp"),
-});
-
-type JobFormData = z.infer<typeof jobSchema>;
+import TagInput from "./job-form/TagInput";
+import { useJobPostForm, JobFormData } from "@/hooks/useJobPostForm";
+import {
+    LOCATION_SUGGESTIONS,
+    JOB_LEVELS,
+    EMPLOYMENT_TYPES,
+    WORK_METHODS,
+    EXPERIENCES,
+    GENDERS
+} from "@/constants/job.constants";
 
 interface JobPostFormProps {
     initialData?: JobFormData & { id?: string };
@@ -38,85 +21,8 @@ interface JobPostFormProps {
 }
 
 const JobPostForm: React.FC<JobPostFormProps> = ({ initialData, isEditMode = false }) => {
-    const router = useRouter();
-    const { error: toastError, success: toastSuccess } = useToast();
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(false);
-
-    const {
-        register,
-        handleSubmit,
-        control,
-        formState: { errors },
-    } = useForm<JobFormData>({
-        resolver: zodResolver(jobSchema),
-        defaultValues: initialData || {
-            employmentType: "FULL_TIME",
-            workMethod: "OFFLINE",
-            gender: "ANY",
-            quantity: 1,
-            salaryMin: 0,
-            salaryMax: 0,
-        },
-    });
-
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const res = await categoryService.getAllCategories();
-                if (res.success && res.data) {
-                    setCategories(res.data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch categories", error);
-            }
-        };
-        fetchCategories();
-    }, []);
-
-    const onSubmit = async (data: JobFormData) => {
-        setLoading(true);
-        try {
-            const payload: JobPostRequest = {
-                ...data,
-                categoryId: Number(data.categoryId), // Ensure number
-                salaryUnit: "VND", // Default currency
-                deadline: new Date(data.deadline).toISOString().split('T')[0] + "T23:59:59", // Format to LocalDateTime
-                gender: data.gender === "ANY" ? "ALL" : data.gender, // Map ANY to ALL for backend
-                address: data.address,
-            };
-
-            let res;
-            if (isEditMode && initialData?.id) {
-                res = await hrService.updateJob(initialData.id, payload);
-            } else {
-                res = await hrService.createJob(payload);
-            }
-
-            if (res.success) {
-                toastSuccess(isEditMode ? "Cập nhật tin thành công" : "Đăng tin thành công");
-                router.push("/hr/job-postings");
-            }
-        } catch (err: any) {
-            // Log detailed error from backend if available
-            console.error("Submit Error RAW:", err);
-            if (typeof err === 'object') {
-                try {
-                    console.error("Submit Error JSON:", JSON.stringify(err, null, 2));
-                } catch (e) { /* ignore circular */ }
-            }
-
-            const errorMsg = err?.response?.data?.message || err?.message || "Có lỗi xảy ra";
-            if (typeof err?.response?.data === 'string') {
-                // specific case where backend returns string body
-                console.error("Submit Error Body:", err.response.data);
-            }
-
-            toastError(errorMsg);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { form, categories, loading, onSubmit } = useJobPostForm({ initialData, isEditMode });
+    const { register, control, formState: { errors }, handleSubmit } = form;
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -168,18 +74,61 @@ const JobPostForm: React.FC<JobPostFormProps> = ({ initialData, isEditMode = fal
                         {errors.deadline && <p className="mt-1 text-xs text-red-500">{errors.deadline.message}</p>}
                     </div>
 
-                    {/* Location */}
-                    <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Tỉnh / Thành phố <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            {...register("location")}
-                            type="text"
-                            placeholder="Ví dụ: Hà Nội, TP.HCM..."
-                            className="mt-1 block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    {/* Skills (MultiSelect) */}
+                    <div>
+                        <Controller
+                            control={control}
+                            name="skills"
+                            render={({ field: { value, onChange } }) => (
+                                <TagInput
+                                    label="Kỹ năng yêu cầu"
+                                    required
+                                    value={value || []}
+                                    onChange={onChange}
+                                    placeholder="Nhập kỹ năng và nhấn Enter..."
+                                    helperText="Ví dụ: ReactJS, Node.js, Java..."
+                                    error={errors.skills?.message}
+                                />
+                            )}
                         />
-                        {errors.location && <p className="mt-1 text-xs text-red-500">{errors.location.message}</p>}
+                    </div>
+
+                    {/* Keywords (MultiSelect) */}
+                    <div>
+                        <Controller
+                            control={control}
+                            name="keywords"
+                            render={({ field: { value, onChange } }) => (
+                                <TagInput
+                                    label="Từ khóa / Tags (Optional)"
+                                    value={value || []}
+                                    onChange={onChange}
+                                    placeholder="Nhập từ khóa và nhấn Enter..."
+                                    helperText="Ví dụ: Việc làm IT, Developer, Remote..."
+                                    error={errors.keywords?.message}
+                                />
+                            )}
+                        />
+                    </div>
+
+                    {/* Locations (MultiSelect) */}
+                    <div className="md:col-span-2">
+                        <Controller
+                            control={control}
+                            name="locations"
+                            render={({ field: { value, onChange } }) => (
+                                <TagInput
+                                    label="Tỉnh / Thành phố"
+                                    required
+                                    value={value || []}
+                                    onChange={onChange}
+                                    suggestions={LOCATION_SUGGESTIONS}
+                                    placeholder="Nhập địa điểm và nhấn Enter..."
+                                    helperText="Nhập tên thành phố và nhấn Enter. Hỗ trợ nhập nhiều địa điểm."
+                                    error={errors.locations?.message}
+                                />
+                            )}
+                        />
                     </div>
 
                     {/* Address */}
@@ -234,10 +183,11 @@ const JobPostForm: React.FC<JobPostFormProps> = ({ initialData, isEditMode = fal
                             {...register("employmentType")}
                             className="mt-1 block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                         >
-                            <option value="FULL_TIME">Toàn thời gian</option>
-                            <option value="PART_TIME">Bán thời gian</option>
-                            <option value="CONTRACT">Hợp đồng</option>
-                            <option value="INTERNSHIP">Thực tập</option>
+                            {EMPLOYMENT_TYPES.map((type) => (
+                                <option key={type.value} value={type.value}>
+                                    {type.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -249,9 +199,11 @@ const JobPostForm: React.FC<JobPostFormProps> = ({ initialData, isEditMode = fal
                             {...register("workMethod")}
                             className="mt-1 block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                         >
-                            <option value="OFFLINE">Tại văn phòng</option>
-                            <option value="ONLINE">Remote</option>
-                            <option value="HYBRID">Hybrid</option>
+                            {WORK_METHODS.map((method) => (
+                                <option key={method.value} value={method.value}>
+                                    {method.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -265,46 +217,61 @@ const JobPostForm: React.FC<JobPostFormProps> = ({ initialData, isEditMode = fal
                             className="mt-1 block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                         >
                             <option value="">-- Chọn kinh nghiệm --</option>
-                            <option value="Không yêu cầu">Không yêu cầu</option>
-                            <option value="Dưới 1 năm">Dưới 1 năm</option>
-                            <option value="1 năm">1 năm</option>
-                            <option value="2 năm">2 năm</option>
-                            <option value="3 năm">3 năm</option>
-                            <option value="4 năm">4 năm</option>
-                            <option value="5 năm">5 năm</option>
-                            <option value="Trên 5 năm">Trên 5 năm</option>
+                            {EXPERIENCES.map((exp) => (
+                                <option key={exp.value} value={exp.value}>
+                                    {exp.label}
+                                </option>
+                            ))}
                         </select>
                         {errors.experience && <p className="mt-1 text-xs text-red-500">{errors.experience.message}</p>}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Số lượng
-                            </label>
-                            <input
-                                {...register("quantity", { valueAsNumber: true })}
-                                type="number"
-                                min="1"
-                                className="mt-1 block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Giới tính
-                            </label>
-                            <select
-                                {...register("gender")}
-                                className="mt-1 block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                            >
-                                <option value="ANY">Không yêu cầu</option>
-                                <option value="MALE">Nam</option>
-                                <option value="FEMALE">Nữ</option>
-                            </select>
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Cấp bậc
+                        </label>
+                        <select
+                            {...register("level")}
+                            className="mt-1 block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        >
+                            {JOB_LEVELS.map((lvl) => (
+                                <option key={lvl.value} value={lvl.value}>
+                                    {lvl.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Số lượng
+                        </label>
+                        <input
+                            {...register("quantity", { valueAsNumber: true })}
+                            type="number"
+                            min="1"
+                            className="mt-1 block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Giới tính
+                        </label>
+                        <select
+                            {...register("gender")}
+                            className="mt-1 block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        >
+                            {GENDERS.map((gender) => (
+                                <option key={gender.value} value={gender.value}>
+                                    {gender.label}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                 </div>
             </ComponentCard>
+
 
             <ComponentCard title="Chi tiết công việc">
                 <div className="space-y-6">
@@ -369,7 +336,7 @@ const JobPostForm: React.FC<JobPostFormProps> = ({ initialData, isEditMode = fal
             <div className="flex justify-end gap-3">
                 <button
                     type="button"
-                    onClick={() => router.back()}
+                    onClick={() => window.history.back()}
                     className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300"
                 >
                     Hủy bỏ
@@ -382,7 +349,7 @@ const JobPostForm: React.FC<JobPostFormProps> = ({ initialData, isEditMode = fal
                     {loading ? "Đang xử lý..." : isEditMode ? "Cập nhật tin" : "Đăng tin ngay"}
                 </button>
             </div>
-        </form>
+        </form >
     );
 };
 

@@ -68,7 +68,7 @@ export default function DashboardOverviewPage() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"
         >
           <StatsCard
             title="Việc đã ứng tuyển"
@@ -81,16 +81,10 @@ export default function DashboardOverviewPage() {
             title="Việc yêu thích"
             value={stats?.totalFavoriteJobs || 0}
             icon={<BookmarkIcon className="w-8 h-8" />}
-            color="warning"
+            color="brand"
             index={1}
           />
-          <StatsCard
-            title="Thông báo việc làm"
-            value={stats?.totalJobAlerts || 0}
-            icon={<BellIcon className="w-8 h-8" />}
-            color="success"
-            index={2}
-          />
+
         </motion.div>
 
         {/* Profile Completion CTA */}
@@ -124,23 +118,23 @@ export default function DashboardOverviewPage() {
             <div className="overflow-x-auto">
               {stats?.recentApplications && stats.recentApplications.length > 0 ? (
                 <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-800">
-                    <tr>
-                      <th className="p-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800">
+                      <th className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Công việc
                       </th>
-                      <th className="p-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Ngày ứng tuyển
                       </th>
-                      <th className="p-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Trạng thái
                       </th>
-                      <th className="p-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="p-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Hành động
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                     {stats.recentApplications.map((app) => (
                       <RecentJobCard key={app.id} job={{
                         id: app.id.toString(),

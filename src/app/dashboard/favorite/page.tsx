@@ -157,8 +157,8 @@ export default function DashboardFavoriteJobsPage() {
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
-                              <Button className="text-sm py-2 px-4">
-                                Apply Now
+                              <Button className="text-xs py-1.5 px-3">
+                                Ứng tuyển
                               </Button>
                             </motion.div>
                           </Link>

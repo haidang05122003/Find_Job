@@ -12,12 +12,12 @@ import Button from "@/components/ui/button/Button";
 
 const CategoryManager: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [skills, setSkills] = useState<Category[]>([]);
+
   const [loading, setLoading] = useState(true);
 
   // Create States
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [newSkillName, setNewSkillName] = useState("");
+
 
   // Edit States
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -45,22 +45,13 @@ const CategoryManager: React.FC = () => {
     }
   };
 
-  const fetchSkills = async () => {
-    try {
-      const skillRes = await adminService.getAllSkills();
-      if (skillRes.data) setSkills(skillRes.data);
-    } catch (error) {
-      console.error("Failed to fetch skills", error);
-    }
-  };
+
 
   useEffect(() => {
     fetchCategories();
   }, [currentPage]);
 
-  useEffect(() => {
-    fetchSkills();
-  }, []);
+
 
   // --- Category Handlers ---
 
@@ -109,28 +100,7 @@ const CategoryManager: React.FC = () => {
     }
   };
 
-  // --- Skill Handlers (Keep using adminService for now if backend skills endpoint is separate) ---
 
-  const handleCreateSkill = async () => {
-    if (!newSkillName.trim()) return;
-    try {
-      await adminService.createSkill({ name: newSkillName });
-      setNewSkillName("");
-      fetchSkills();
-    } catch (error) {
-      alert("Tạo kỹ năng thất bại (có thể đã tồn tại)");
-    }
-  };
-
-  const handleDeleteSkill = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa kỹ năng này?")) return;
-    try {
-      await adminService.deleteSkill(id);
-      fetchSkills();
-    } catch (error) {
-      alert("Xóa thất bại");
-    }
-  };
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -200,40 +170,7 @@ const CategoryManager: React.FC = () => {
         </div>
       </ComponentCard>
 
-      <ComponentCard
-        title="Danh mục kỹ năng"
-        desc="Danh sách kỹ năng gợi ý khi tạo tin tuyển dụng."
-      >
-        <div className="flex flex-wrap gap-3">
-          {skills.map((skill) => (
-            <span
-              key={skill.id}
-              className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1.5 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300"
-            >
-              {skill.name}
-              <button
-                onClick={() => handleDeleteSkill(skill.id)}
-                className="text-xs text-gray-400 transition hover:text-brand-500">
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
-        <div className="mt-6 flex gap-3">
-          <input
-            type="text"
-            value={newSkillName}
-            onChange={(e) => setNewSkillName(e.target.value)}
-            placeholder="Nhập kỹ năng mới..."
-            className="flex-1 rounded-xl border border-gray-200 bg-transparent px-4 py-2 text-sm text-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-100 dark:border-gray-700 dark:text-gray-300"
-          />
-          <button
-            onClick={handleCreateSkill}
-            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600">
-            Thêm
-          </button>
-        </div>
-      </ComponentCard>
+
 
       {/* Edit Modal */}
       <Modal

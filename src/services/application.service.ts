@@ -22,6 +22,7 @@ export interface Application {
     jobId: string;
     jobTitle: string;
     companyName: string;
+    companyLogo?: string;
     recruiterId?: string; // HR ID for chatting
     candidateId: string;
     candidateName: string;
@@ -31,6 +32,7 @@ export interface Application {
     cvUrl?: string;
     appliedAt: string;
     updatedAt: string;
+    desiredLocation?: string;
 }
 
 /**
@@ -40,6 +42,7 @@ export interface ApplicationRequest {
     jobId: string;
     cvId?: string;
     coverLetter?: string;
+    desiredLocation?: string;
 }
 
 /**

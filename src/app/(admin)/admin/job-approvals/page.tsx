@@ -5,14 +5,14 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import JobApprovalQueue from "@/components/admin/JobApprovalQueue";
 
 export const metadata: Metadata = {
-  title: "Duyệt tin tuyển dụng | Quản trị hệ thống",
-  description: "Xét duyệt tin tuyển dụng mới và yêu cầu chỉnh sửa.",
+  title: "Quản lý tuyển dụng | Quản trị hệ thống",
+  description: "Quản lý và xét duyệt tin tuyển dụng trong hệ thống.",
 };
 
 export default function JobApprovalsPage() {
   return (
     <>
-      <PageBreadcrumb pageTitle="Duyệt tin tuyển dụng" />
+      <PageBreadcrumb pageTitle="Quản lý tuyển dụng" />
       <JobApprovalQueue />
     </>
   );

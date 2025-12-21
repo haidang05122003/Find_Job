@@ -10,12 +10,16 @@ import Backdrop from "@/layout/Backdrop";
 import React from "react";
 import AdminGuard from "@/components/auth/AdminGuard";
 
+import { usePathname } from "next/navigation";
+
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+  const pathname = usePathname();
+  const isChatPage = pathname?.includes('/chat');
 
   const mainContentMargin = isMobileOpen
     ? "ml-0"
@@ -35,7 +39,7 @@ export default function AdminLayout({
                 className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
               >
                 <AppHeader />
-                <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+                <div className={`mx-auto ${isChatPage ? 'p-0 w-full max-w-full' : 'p-4 max-w-(--breakpoint-2xl) md:p-6'}`}>
                   {children}
                 </div>
               </div>

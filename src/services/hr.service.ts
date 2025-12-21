@@ -14,6 +14,9 @@ export interface JobPostRequest {
     benefits?: string;
     categoryId: number;
     location: string;
+    locations?: string[];
+    skills?: string[];
+    keywords?: string[];
     address?: string;
     salaryMin: number;
     salaryMax: number;
@@ -23,7 +26,32 @@ export interface JobPostRequest {
     experience: string;
     quantity: number;
     gender?: 'MALE' | 'FEMALE' | 'ALL';
+    level?: string;
     deadline: string;
+}
+
+export interface CompanyRegistrationRequest {
+    companyName: string;
+    description: string;
+    industry: string;
+    address: string;
+    website: string;
+    phone: string;
+    email: string;
+    logoUrl?: string;
+    companySize: string;
+    companyCode?: string;
+}
+
+export interface MemberResponse {
+    id: number;
+    fullName: string;
+    email: string;
+    username: string;
+    role: string;
+    status: "ACTIVE" | "PENDING" | "INACTIVE";
+    avatarUrl?: string;
+    phone?: string;
 }
 
 /**
@@ -53,6 +81,10 @@ export interface HRJobResponse {
     gender: string;
     workMethod: string;
     address: string;
+    skills?: string[];
+    keywords?: string[];
+    locations?: string[];
+    level?: string;
     applicationsCount?: number;
 }
 
@@ -95,8 +127,17 @@ export interface HRDashboardStats {
     activeJobs: number;
     totalApplications: number;
     pendingApplications: number;
-    interviewsScheduled: number;
+    approvedApplications: number;
+    interviewScheduled: number;
+    offeredApplications: number;
     hiredCount: number;
+    recentJobs: {
+        id: number;
+        title: string;
+        applicantsCount: number;
+        status: string;
+        createdAt: string;
+    }[];
 }
 
 /**
@@ -193,8 +234,16 @@ class HRService extends BaseService {
      * Register new company
      * POST /companies/register
      */
-    async registerCompany(data: any): Promise<BaseResponse<CompanyProfile>> {
-        return this.post<CompanyProfile, any>('/companies/register', data);
+    async registerCompany(data: CompanyRegistrationRequest): Promise<BaseResponse<CompanyProfile>> {
+        return this.post<CompanyProfile, CompanyRegistrationRequest>('/companies/register', data);
+    }
+
+    /**
+     * Join existing company via code
+     * POST /companies/join
+     */
+    async joinCompany(companyCode: string): Promise<BaseResponse<string>> {
+        return this.post<string>(`/companies/join?companyCode=${companyCode}`);
     }
 
     /**
@@ -225,8 +274,45 @@ class HRService extends BaseService {
         });
     }
 
+    // ==================== Member Management ====================
+
+    /**
+     * Get all company members
+     * GET /companies/members
+     */
+    async getMembers(): Promise<BaseResponse<MemberResponse[]>> {
+        return this.get<MemberResponse[]>('/companies/members');
+    }
+
+    /**
+     * Approve a member
+     * POST /companies/members/{memberId}/approve
+     */
+    async approveMember(memberId: number | string): Promise<BaseResponse<string>> {
+        return this.post<string>(`/companies/members/${memberId}/approve`);
+    }
+
+    /**
+     * Reject a member
+     * POST /companies/members/{memberId}/reject
+     */
+    async rejectMember(memberId: number | string): Promise<BaseResponse<string>> {
+        return this.post<string>(`/companies/members/${memberId}/reject`);
+    }
+
+    /**
+     * Remove a member
+     * DELETE /companies/members/{memberId}
+     */
+    async removeMember(memberId: number | string): Promise<BaseResponse<string>> {
+        return this.delete<string>(`/companies/members/${memberId}`);
+    }
+
     // ==================== Helper Methods ====================
 
+    /**
+     * Transform job response to frontend format
+     */
     /**
      * Transform job response to frontend format
      */
@@ -240,9 +326,9 @@ class HRService extends BaseService {
                 logo: job.companyLogo || '',
             },
             location: job.location || job.address,
-            locationType: job.workMethod?.toLowerCase() || 'offline',
-            jobType: job.employmentType?.toLowerCase() || 'full_time',
-            experienceLevel: job.experience?.toLowerCase() || 'entry',
+            locationType: (job.workMethod?.toLowerCase() === 'offline' ? 'onsite' : job.workMethod?.toLowerCase()) as 'onsite' | 'remote' | 'hybrid',
+            jobType: job.employmentType?.toLowerCase() as 'full-time' | 'part-time' | 'contract' | 'internship',
+            experienceLevel: job.experience?.toLowerCase() as 'entry' | 'mid' | 'senior' | 'lead',
             salary: {
                 min: job.salaryMin,
                 max: job.salaryMax,
@@ -252,6 +338,8 @@ class HRService extends BaseService {
             deadline: job.deadline,
             createdAt: job.createdAt,
             applicationsCount: job.applicationsCount || 0,
+            skills: job.skills || [],
+            keywords: job.keywords || [],
         };
     }
 }

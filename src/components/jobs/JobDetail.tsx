@@ -13,7 +13,7 @@ const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
+
     if (days === 0) return 'Hôm nay';
     if (days === 1) return 'Hôm qua';
     if (days < 7) return `${days} ngày trước`;
@@ -24,7 +24,7 @@ const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
   const formatSalary = () => {
     const { min, max, period } = job.salary;
     const periodText = period === 'month' ? '/tháng' : period === 'year' ? '/năm' : '/giờ';
-    
+
     if (min === max) {
       return `$${min.toLocaleString()}${periodText}`;
     }
@@ -92,9 +92,10 @@ const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
           Mô tả công việc
         </h2>
-        <p className="mt-4 text-gray-700 leading-relaxed dark:text-gray-300">
-          {job.description}
-        </p>
+        <div
+          className="mt-4 text-gray-700 leading-relaxed dark:text-gray-300 [&>p]:mb-4 [&>ul]:list-disc [&>ul]:ml-5 [&>ol]:list-decimal [&>ol]:ml-5"
+          dangerouslySetInnerHTML={{ __html: job.description }}
+        />
       </div>
 
       {/* Requirements */}

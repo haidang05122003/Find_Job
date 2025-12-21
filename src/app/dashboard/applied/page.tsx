@@ -202,9 +202,46 @@ export default function DashboardAppliedJobsPage() {
                             <motion.div
                               whileHover={{ scale: 1.1, rotate: 5 }}
                               transition={{ duration: 0.2 }}
-                              className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm"
+                              className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-100 dark:border-gray-700 bg-white"
                             >
-                              {app.companyName?.charAt(0)?.toUpperCase() || "C"}
+                              {(() => {
+                                const getImageUrl = (path: string | undefined | null) => {
+                                  if (!path) return null;
+                                  if (path.startsWith('http') || path.startsWith('data:')) return path;
+
+                                  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+                                  const baseUrl = apiUrl.replace(/\/api\/v1\/?$/, '');
+
+                                  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+                                };
+
+                                const logoSrc = getImageUrl(app.companyLogo);
+
+                                // Fallback to initial if no logo
+                                if (!logoSrc) {
+                                  return (
+                                    <div className="w-full h-full bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                                      {app.companyName?.charAt(0)?.toUpperCase() || "C"}
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <img
+                                    src={logoSrc}
+                                    alt={app.companyName}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                      e.currentTarget.parentElement?.querySelector('.fallback-initial')?.classList.remove('hidden');
+                                    }}
+                                  />
+                                );
+                              })()}
+                              {/* Hidden fallback for onError handling */}
+                              <div className="fallback-initial hidden absolute inset-0 bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                                {app.companyName?.charAt(0)?.toUpperCase() || "C"}
+                              </div>
                             </motion.div>
                             <div>
                               <p className="font-medium text-gray-900 dark:text-white/90">
@@ -265,6 +302,6 @@ export default function DashboardAppliedJobsPage() {
           </>
         )}
       </motion.div>
-    </PageTransition>
+    </PageTransition >
   );
 }

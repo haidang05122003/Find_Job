@@ -20,6 +20,8 @@ export default function UserInfoCard() {
     phone: "",
     bio: "",
   });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -28,14 +30,28 @@ export default function UserInfoCard() {
         phone: user.phone || "",
         bio: user.bio || "",
       });
+      setAvatarPreview(user.avatarUrl && user.avatarUrl.startsWith("http") ? user.avatarUrl : (user.avatarUrl ? `http://localhost:8080${user.avatarUrl}` : null));
     }
   }, [user]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
 
   const handleSave = async () => {
     setIsLoading(true);
     try {
+      // Upload avatar first if selected
+      if (avatarFile) {
+        await userService.uploadAvatar(avatarFile);
+      }
+
       const response = await userService.updateProfile({
-        name: formData.name,
+        fullName: formData.name,
         phone: formData.phone,
         bio: formData.bio,
       });
@@ -54,8 +70,11 @@ export default function UserInfoCard() {
     }
   };
 
+  const isHR = user?.role === "HR" || user?.roles?.includes("HR");
+
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
+      {/* ... keeping existing display code ... */}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
@@ -83,28 +102,19 @@ export default function UserInfoCard() {
 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Phone
-              </p>
-              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user?.phone || "N/A"}
-              </p>
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Bio
-              </p>
-              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user?.bio || "N/A"}
-              </p>
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                 Role
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                 {user?.role || "N/A"}
+              </p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                Phone
+              </p>
+              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                {user?.phone || "N/A"}
               </p>
             </div>
           </div>
@@ -144,13 +154,38 @@ export default function UserInfoCard() {
             </p>
           </div>
           <div className="flex flex-col">
-            <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
+            <div className="custom-scrollbar h-[250px] overflow-y-auto px-2 pb-3">
               <div className="mt-7">
                 <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
                   Personal Information
                 </h5>
 
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
+
+                  {/* Avatar Upload - Only if NOT HR */}
+                  {!isHR && (
+                    <div className="col-span-2">
+                      <Label>Profile Picture</Label>
+                      <div className="flex items-center gap-4 mt-2">
+                        <div className="h-16 w-16 overflow-hidden rounded-full border border-gray-200">
+                          {avatarPreview ? (
+                            <img src={avatarPreview} alt="Avatar Preview" className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400">
+                              No Img
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Full Name</Label>
                     <Input
@@ -162,25 +197,7 @@ export default function UserInfoCard() {
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Email Address</Label>
-                    <Input type="text" value={user?.email || ""} readOnly />
-                  </div>
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Phone</Label>
-                    <Input
-                      type="text"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <Label>Bio</Label>
-                    <Input
-                      type="text"
-                      value={formData.bio}
-                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    />
+                    <Input type="text" value={user?.email || ""} readOnly disabled className="bg-gray-100 opacity-70" />
                   </div>
                 </div>
               </div>

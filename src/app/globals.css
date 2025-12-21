@@ -301,6 +301,20 @@
 
 
 @layer utilities {
+  @keyframes toast-progress {
+    from {
+      width: 100%;
+    }
+    to {
+      width: 0%;
+    }
+  }
+
+  .animate-toast-progress {
+    animation-name: toast-progress;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
 
   /* For Remove Date Icon */
   input[type="date"]::-webkit-inner-spin-button,

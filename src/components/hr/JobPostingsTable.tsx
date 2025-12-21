@@ -217,7 +217,9 @@ const JobPostingsTable: React.FC = () => {
                           {job.title}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {job.location}
+                          {job.locations && job.locations.length > 0
+                            ? job.locations.join(", ")
+                            : job.location}
                         </div>
                       </div>
                     </td>

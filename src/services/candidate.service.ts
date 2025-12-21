@@ -1,6 +1,13 @@
 import { BaseService } from './base.service';
 import type { BaseResponse, PageResponse } from '@/types/api';
 import type { CandidateProfile, CandidateProfileRequest, Resume, Skill } from '@/types/candidate';
+import type { QueryParams } from '@/types/service';
+
+export interface CandidateSearchParams extends QueryParams {
+    keyword?: string;
+    location?: string;
+    skills?: string[];
+}
 
 export interface PublicCandidateResponse {
     id: number;
@@ -42,8 +49,18 @@ class CandidateService extends BaseService {
     /**
      * Search candidates (Public)
      */
-    async searchCandidates(params?: any): Promise<BaseResponse<PageResponse<PublicCandidateResponse>>> {
-        return this.get<PageResponse<PublicCandidateResponse>>('/public/candidates', { params });
+    /**
+     * Search candidates (Public)
+     */
+    async searchCandidates(params?: CandidateSearchParams): Promise<BaseResponse<PageResponse<PublicCandidateResponse>>> {
+        const queryParams: CandidateSearchParams = {
+            page: (Number(params?.page) || 1) - 1,
+            size: Number(params?.size || params?.limit || 10),
+            keyword: params?.keyword,
+            location: params?.location,
+            skills: params?.skills
+        };
+        return this.get<PageResponse<PublicCandidateResponse>>('/public/candidates', { params: queryParams });
     }
 
     /**
@@ -113,32 +130,26 @@ class CandidateService extends BaseService {
      * Set Default CV
      */
     async setDefaultCv(id: number): Promise<BaseResponse<string>> {
-        return this.patch<string, any>(`/candidates/cvs/${id}/default`, {});
+        return this.patch<string, object>(`/candidates/cvs/${id}/default`, {});
     }
 
     /**
      * Download CV securely
      */
     async downloadCvBlob(id: number): Promise<Blob> {
-        // We use the base http client directly or a specific method to get blob
-        // Assuming 'this.http' refers to the axios instance from BaseService if exposed,
-        // or we need to use a raw request. 
-        // BaseService usually wraps calls. Let's assume we can add a method there or just use the path.
-        // If BaseService doesn't support blob, we might need to extend it.
-        // Let's rely on the fact that BaseService might need a 'getBlob' method.
-        // Or checking BaseService first...
-        // Wait, I should check BaseService.
-        // If not, I can import axiosClient.
-        return (await import("@/services/axios-client")).default.get(`/candidates/cvs/${id}`, {
+        const axios = (await import("@/services/axios-client")).default;
+        const response = await axios.get<Blob>(`/candidates/cvs/${id}`, {
             responseType: 'blob'
-        }) as Promise<Blob>;
+        });
+        return response as unknown as Blob; // Axios interceptor might affect return type, safe cast if we know it works
     }
 
     async downloadPublicCvBlob(cvId: number): Promise<Blob> {
-        // @ts-ignore
-        return (await import("@/services/axios-client")).default.get(`/public/candidates/cvs/${cvId}`, {
+        const axios = (await import("@/services/axios-client")).default;
+        const response = await axios.get<Blob>(`/public/candidates/cvs/${cvId}`, {
             responseType: 'blob'
-        }) as Promise<Blob>;
+        });
+        return response as unknown as Blob;
     }
 
     async uploadAvatar(file: File): Promise<BaseResponse<string>> {

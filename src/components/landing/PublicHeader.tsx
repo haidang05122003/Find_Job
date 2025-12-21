@@ -40,9 +40,7 @@ const PublicHeader: React.FC = () => {
               <Link href="/candidates" className="text-sm font-medium text-gray-700 transition hover:text-brand-500 dark:text-gray-300">
                 Ứng viên
               </Link>
-              <Link href="/messages" target="_blank" className="text-sm font-medium text-gray-700 transition hover:text-brand-500 dark:text-gray-300">
-                Chat
-              </Link>
+
             </nav>
           </div>
 
@@ -52,32 +50,23 @@ const PublicHeader: React.FC = () => {
                 {/* HR: Show "Đăng tuyển ngay" CTA */}
                 {isHR && (
                   <Link
-                    href="/hr"
-                    className="hidden md:flex items-center gap-3 rounded-lg bg-gradient-to-r from-orange-50 to-orange-100 px-4 py-2 transition hover:from-orange-100 hover:to-orange-200 dark:from-orange-900/20 dark:to-orange-800/20"
+                    href="/hr/job-postings"
+                    className="hidden md:flex items-center gap-3 rounded-lg bg-brand-50 px-3 py-1.5 transition hover:bg-brand-100 dark:bg-brand-900/20 dark:hover:bg-brand-800/30"
                   >
                     <div className="relative">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/50 overflow-hidden">
-                        {user.avatarUrl ? (
-                          <img
-                            src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:8080${user.avatarUrl}`}
-                            alt={user.name || 'Avatar'}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <svg className="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                        )}
+                      <div className="flex h-10 w-10 items-start justify-center rounded-full bg-transparent overflow-hidden pt-1">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-brand-500">
+                          <path d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M16 7V5C16 4.46957 15.7893 3.96086 15.4142 3.58579C15.0391 3.21071 14.5304 3 14 3H10C9.46957 3 8.96086 3.21071 8.58579 3.58579C8.21071 3.96086 8 4.46957 8 5V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M2 13H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                       </div>
-                      {/* Notification badge */}
-                      <span className="absolute -top-1 -left-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                        13
-                      </span>
+
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Bạn là nhà tuyển dụng?</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        Đăng tuyển ngay <span className="text-orange-500">»</span>
+                    <div className="text-left flex flex-col justify-center">
+                      <p className="text-[10px] text-gray-500 font-medium leading-tight dark:text-gray-400">Bạn là nhà tuyển dụng?</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight">
+                        Đăng tuyển ngay <span className="text-brand-500 text-xs align-middle">»</span>
                       </p>
                     </div>
                   </Link>
@@ -89,7 +78,7 @@ const PublicHeader: React.FC = () => {
                     href="/dashboard"
                     className="hidden text-sm font-medium text-gray-700 transition hover:text-brand-500 dark:text-gray-300 md:block"
                   >
-                    Bảng điều khiển
+                    Thống kê
                   </Link>
                 )}
 
@@ -167,9 +156,7 @@ const PublicHeader: React.FC = () => {
               <Link href="/candidates" className="rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800" onClick={() => setIsMobileMenuOpen(false)}>
                 Ứng viên
               </Link>
-              <Link href="/messages" target="_blank" className="rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800" onClick={() => setIsMobileMenuOpen(false)}>
-                Chat
-              </Link>
+
               <div className="my-2 border-t border-gray-100 dark:border-gray-800" />
               {isAuthenticated ? (
                 <>
@@ -191,7 +178,7 @@ const PublicHeader: React.FC = () => {
                   ) : (
                     <>
                       <Link href="/dashboard" className="rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800" onClick={() => setIsMobileMenuOpen(false)}>
-                        Bảng điều khiển
+                        Thống kê
                       </Link>
                       <Link href="/dashboard/favorite" className="rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800" onClick={() => setIsMobileMenuOpen(false)}>
                         Việc đã lưu

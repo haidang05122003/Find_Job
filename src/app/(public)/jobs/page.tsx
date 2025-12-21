@@ -1,46 +1,113 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import JobGrid from '@/components/landing/JobGrid';
-import JobSearchBar from '@/components/jobs/JobSearchBar';
-import JobFilters, { FilterState } from '@/components/jobs/JobFilters';
-import Badge from '@/components/shared/Badge';
+import JobSearchBar, { SearchQuery } from '@/components/jobs/JobSearchBar';
 import PageBanner from '@/components/shared/PageBanner';
+import { FilterState } from '@/components/jobs/AdvanceFilter';
 import { useFilters } from '@/context/FilterContext';
 import { useToast } from '@/context/ToastContext';
 import { jobService } from '@/services/job.service';
-import { favoriteService } from '@/services/favorite.service';
-import type { SearchQuery } from '@/components/jobs/JobSearchBar';
 
 export default function JobsPage() {
-  const { filters: contextFilters, updateFilter, resetFilters, activeFilterCount } = useFilters();
-  const { success, info, error: toastError } = useToast();
-  const [showFilters, setShowFilters] = useState(false);
+  const { filters: contextFilters, updateFilter, resetFilters, setFilters } = useFilters();
+  const { error: toastError } = useToast();
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('latest');
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
 
-  // API State
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await jobService.getLocations();
+        if (response.success && response.data) {
+          setAvailableLocations(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch locations");
+      }
+    };
+    fetchLocations();
+  }, []);
+
+  // ... (rest of code)
+
+
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [pageSize, setPageSize] = useState(12);
 
   const [localFilters, setLocalFilters] = useState<FilterState>({
     jobTypes: [],
     experienceLevels: [],
-    salaryRange: { min: 0, max: 200000 },
+    jobLevels: [],
+    salaryRange: { min: 0, max: 0 },
     datePosted: 'all',
     locationType: [],
   });
 
-  // Track if we need to reset page
-  const [shouldResetPage, setShouldResetPage] = useState(false);
+  // Calculate active tags for display
+  const activeTags = useMemo(() => {
+    const tags: { label: string; type: string; value: any }[] = [];
+
+    if (contextFilters.searchQuery) tags.push({ label: `Tìm: ${contextFilters.searchQuery}`, type: 'searchQuery', value: contextFilters.searchQuery });
+    if (contextFilters.locations && contextFilters.locations.length > 0) tags.push({ label: contextFilters.locations[0], type: 'location', value: contextFilters.locations[0] });
+    if (contextFilters.categories && contextFilters.categories.length > 0) tags.push({ label: contextFilters.categories[0], type: 'category', value: contextFilters.categories[0] });
+
+    localFilters.jobTypes.forEach(type => {
+      // Map value to label if possible, here using simple mapping or value
+      const labelMap: Record<string, string> = {
+        'FULL_TIME': 'Toàn thời gian',
+        'PART_TIME': 'Bán thời gian',
+        'CONTRACT': 'Hợp đồng',
+        'INTERNSHIP': 'Thực tập',
+        'REMOTE': 'Làm từ xa',
+        'TEMPORARY': 'Tạm thời'
+      };
+      tags.push({ label: labelMap[type] || type, type: 'jobTypes', value: type });
+    });
+
+    localFilters.experienceLevels.forEach(exp => {
+      const labelMap: Record<string, string> = {
+        'Không yêu cầu': 'Mới tốt nghiệp / Thực tập',
+        'Dưới 1 năm': '1 - 2 Năm',
+        '1 năm': '2 - 4 Năm',
+        '3 năm': '4 - 6 Năm',
+        '5 năm': '6 - 8 Năm',
+        'Trên 5 năm': '10 - 15 Năm',
+        'Expert': 'Trên 15 Năm'
+      }
+      tags.push({ label: labelMap[exp] || exp, type: 'experienceLevels', value: exp });
+    });
+
+    localFilters.jobLevels.forEach(level => {
+      const labelMap: Record<string, string> = {
+        'INTERN': 'Thực tập sinh',
+        'STAFF': 'Nhân viên',
+        'TEAM_LEADER': 'Trưởng nhóm',
+        'MANAGER': 'Trưởng phòng',
+        'DIRECTOR': 'Giám đốc',
+        'VICE_PRESIDENT': 'Phó chủ tịch'
+      }
+      tags.push({ label: labelMap[level] || level, type: 'jobLevels', value: level });
+    });
+
+    if (localFilters.salaryRange.min > 0 || (localFilters.salaryRange.max > 0 && localFilters.salaryRange.max < 100000000)) {
+      const min = localFilters.salaryRange.min > 0 ? `${(localFilters.salaryRange.min / 1000000).toLocaleString('vi-VN')}Tr` : '0';
+      const max = localFilters.salaryRange.max > 0 && localFilters.salaryRange.max < 100000000 ? `${(localFilters.salaryRange.max / 1000000).toLocaleString('vi-VN')}Tr` : '∞';
+      tags.push({ label: `${min} - ${max} VND`, type: 'salaryRange', value: 'salary' });
+    }
+
+    return tags;
+  }, [contextFilters, localFilters]);
+
 
   const fetchJobs = async (pageIndex: number) => {
     setLoading(true);
     try {
-      // Convert datePosted to daysAgo
       let daysAgo;
       switch (localFilters.datePosted) {
         case '24h': daysAgo = 1; break;
@@ -49,22 +116,23 @@ export default function JobsPage() {
         default: daysAgo = undefined;
       }
 
-      // Map filters to API params - always use size 12
       const params: any = {
         page: pageIndex,
-        size: 12,
+        size: pageSize,
         keyword: contextFilters.searchQuery || undefined,
-        location: contextFilters.location || undefined,
-        category: contextFilters.category || undefined,
+        location: contextFilters.locations?.[0] || undefined,
+        category: contextFilters.categories?.[0] || undefined,
         minSalary: localFilters.salaryRange.min > 0 ? localFilters.salaryRange.min : undefined,
-        maxSalary: localFilters.salaryRange.max > 0 && localFilters.salaryRange.max < 200000 ? localFilters.salaryRange.max : undefined,
+        maxSalary: localFilters.salaryRange.max > 0 ? localFilters.salaryRange.max : undefined,
         employmentType: localFilters.jobTypes.length > 0 ? localFilters.jobTypes[0] : undefined,
         workMethod: localFilters.locationType.length > 0 ? localFilters.locationType[0] : undefined,
         experience: localFilters.experienceLevels.length > 0 ? localFilters.experienceLevels[0] : undefined,
-        daysAgo: daysAgo
+        level: localFilters.jobLevels.length > 0 ? localFilters.jobLevels[0] : undefined,
+        daysAgo: daysAgo,
+        sort: sortBy === 'latest' ? 'createdAt,desc' : 'createdAt,asc'
       };
 
-      console.log('Filter params:', params); // Debug log
+      // console.log('Fetching Jobs with params:', params);
 
       const response = await jobService.searchJobs(params);
       if (response.success && response.data) {
@@ -80,177 +148,222 @@ export default function JobsPage() {
     }
   };
 
-  // Initial load and when filters change - reset to page 0
   useEffect(() => {
     fetchJobs(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contextFilters.searchQuery, contextFilters.location, contextFilters.category,
-  localFilters.jobTypes, localFilters.experienceLevels, localFilters.salaryRange,
-  localFilters.datePosted, localFilters.locationType]);
+  }, [contextFilters.searchQuery, contextFilters.locations, contextFilters.categories,
+  localFilters.jobTypes, localFilters.experienceLevels, localFilters.jobLevels, localFilters.salaryRange,
+  localFilters.datePosted, localFilters.locationType, pageSize, sortBy]);
 
-  // Handle page change
   const handlePageChange = (newPage: number) => {
     if (newPage >= 0 && newPage < totalPages) {
       fetchJobs(newPage);
-      // Scroll to top of job list
-      window.scrollTo({ top: 300, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handleSearch = (query: SearchQuery) => {
-    if (query.keyword) updateFilter('searchQuery', query.keyword);
-    if (query.location) updateFilter('location', query.location);
-    if (query.category) updateFilter('category', query.category);
-    // fetchJobs will trigger by useEffect
+    const newFilters = { ...contextFilters };
+    if (query.keyword !== undefined) newFilters.searchQuery = query.keyword;
+    if (query.location !== undefined) newFilters.locations = query.location ? [query.location] : [];
+    if (query.category !== undefined) newFilters.categories = query.category ? [query.category] : [];
+    setFilters(newFilters);
   };
 
   const handleFilterChange = (newFilters: FilterState) => {
     setLocalFilters(newFilters);
-    Object.entries(newFilters).forEach(([key, value]) => {
-      updateFilter(key as keyof FilterState, value);
-    });
   };
 
   const handleResetFilters = () => {
     setLocalFilters({
       jobTypes: [],
       experienceLevels: [],
-      salaryRange: { min: 0, max: 200000 },
+      jobLevels: [],
+      salaryRange: { min: 0, max: 0 },
       datePosted: 'all',
       locationType: [],
     });
     resetFilters();
-    success('Đã xóa tất cả bộ lọc');
   };
 
-
-
-  const handleBookmark = async (jobId: string) => {
-    // Find job to check status
-    const job = jobs.find(j => j.id === jobId);
-    if (!job) return;
-
-    // Optimistically update UI
-    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, isBookmarked: !j.isBookmarked } : j));
-
-    try {
-      if (job.isBookmarked) {
-        await favoriteService.removeFavorite(jobId);
-        success('Đã bỏ lưu công việc');
-      } else {
-        await favoriteService.addFavorite(jobId);
-        success('Đã lưu công việc');
-      }
-    } catch (error) {
-      // Revert on error
-      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, isBookmarked: job.isBookmarked } : j));
-      toastError('Có lỗi xảy ra');
+  const handleRemoveTag = (tag: { label: string; type: string; value: any }) => {
+    switch (tag.type) {
+      case 'searchQuery': updateFilter('searchQuery', ''); break;
+      case 'location': setFilters({ ...contextFilters, locations: [] }); break;
+      case 'category': setFilters({ ...contextFilters, categories: [] }); break;
+      case 'jobTypes':
+        setLocalFilters(prev => ({
+          ...prev,
+          jobTypes: prev.jobTypes.filter(t => t !== tag.value)
+        }));
+        break;
+      case 'experienceLevels':
+        setLocalFilters(prev => ({
+          ...prev,
+          experienceLevels: prev.experienceLevels.filter(t => t !== tag.value)
+        }));
+        break;
+      case 'jobLevels':
+        setLocalFilters(prev => ({
+          ...prev,
+          jobLevels: prev.jobLevels.filter(t => t !== tag.value)
+        }));
+        break;
+      case 'salaryRange':
+        setLocalFilters(prev => ({
+          ...prev,
+          salaryRange: { min: 0, max: 0 }
+        }));
+        break;
     }
   };
 
-  const handleApply = () => {
-    info('Chức năng ứng tuyển đang được phát triển');
-  };
 
-  const getActiveFilters = () => {
-    const active: { label: string; onRemove: () => void }[] = [];
-
-    if (contextFilters.searchQuery) {
-      active.push({
-        label: `Từ khóa: ${contextFilters.searchQuery}`,
-        onRemove: () => updateFilter('searchQuery', ''),
-      });
-    }
-
-    if (contextFilters.location) {
-      active.push({
-        label: `Địa điểm: ${contextFilters.location}`,
-        onRemove: () => updateFilter('location', ''),
-      });
-    }
-
-    if (contextFilters.category) {
-      active.push({
-        label: `Danh mục: ${contextFilters.category}`,
-        onRemove: () => updateFilter('category', ''),
-      });
-    }
-
-    // ... (rest same)
-    return active;
-  };
-
-  const activeFilters = getActiveFilters();
+  // Sync local filters from context (URL)
+  useEffect(() => {
+    setLocalFilters(prev => ({
+      ...prev,
+      jobTypes: contextFilters.jobTypes || [],
+      experienceLevels: contextFilters.experienceLevels || [],
+      jobLevels: contextFilters.jobLevels || [],
+      salaryRange: contextFilters.salaryRange || { min: 0, max: 0 },
+      datePosted: contextFilters.postedWithin || 'all' as any,
+    }));
+  }, [contextFilters]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
+
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Banner */}
         <PageBanner
           title="Tìm việc làm"
           subtitle="Khám phá hàng nghìn cơ hội việc làm phù hợp với bạn từ các công ty hàng đầu"
-          gradient="blue"
           icon={
             <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           }
         />
 
-        {/* Search Bar */}
+        {/* Search Bar - Clean Layout like Employers Page */}
         <div className="mb-8">
-          <JobSearchBar onSearch={handleSearch} />
+          <JobSearchBar
+            onSearch={handleSearch}
+            onFilterChange={handleFilterChange}
+            filters={localFilters}
+            onResetFilters={handleResetFilters}
+            locations={availableLocations}
+            initialValues={{
+              keyword: contextFilters.searchQuery,
+              location: contextFilters.locations?.[0], // Map array to singular
+              category: contextFilters.categories?.[0]
+            }}
+          />
         </div>
 
-        {/* Active Filters */}
-        {activeFilters.length > 0 && (
-          <div className="mb-6 flex flex-wrap items-center gap-3">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Bộ lọc đang áp dụng:
-            </span>
-            {activeFilters.map((filter, index) => (
-              <Badge
-                key={index}
-                variant="info"
-                className="flex items-center gap-2"
-              >
-                {filter.label}
-                <button
-                  onClick={filter.onRemove}
-                  className="hover:text-error-500"
-                >
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </Badge>
-            ))}
-            <button
-              onClick={handleResetFilters}
-              className="text-sm font-medium text-brand-500 hover:text-brand-600"
-            >
-              Xóa tất cả
-            </button>
-          </div>
-        )}
+        <div className="flex flex-col gap-6">
+          <div className="w-full">
+            {/* Toolbar: Filters (Left) & Sort (Right) */}
+            <div className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center gap-4 mb-8">
 
-        {/* Main Content */}
-        <div className="flex gap-8">
-          {/* Filters Sidebar - Desktop */}
-          <aside className="hidden w-80 flex-shrink-0 lg:block">
-            <div className="sticky top-24 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-              <JobFilters
-                filters={localFilters}
-                onFilterChange={handleFilterChange}
-                onReset={handleResetFilters}
-              />
+              {/* Dynamic Active Filter Tags */}
+              <div className="flex flex-col gap-2 flex-1 min-w-0">
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                  Tìm thấy <span className="text-brand-600 font-bold">{totalElements}</span> việc làm
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  {activeTags.length > 0 ? (
+                    activeTags.map((tag, idx) => (
+                      <button
+                        key={`${tag.type}-${idx}`}
+                        onClick={() => handleRemoveTag(tag)}
+                        className="group flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:border-brand-500 hover:text-brand-600 transition-colors shadow-sm whitespace-nowrap"
+                      >
+                        {tag.label}
+                        <span className="p-0.5 rounded-full hover:bg-gray-100 group-hover:bg-brand-50 group-hover:text-brand-600 text-gray-400">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">Chưa có bộ lọc nào được chọn</p>
+                  )}
+                  {activeTags.length > 0 && (
+                    <button onClick={handleResetFilters} className="text-sm text-brand-600 hover:text-brand-700 hover:underline font-medium ml-2">
+                      Xóa tất cả
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Sort Options */}
+              <div className="flex items-center gap-4 flex-shrink-0 ml-auto md:ml-0">
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="appearance-none h-[40px] pl-4 pr-10 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 shadow-sm cursor-pointer hover:border-gray-300 transition-colors"
+                  >
+                    <option value="latest">Mới nhất</option>
+                    <option value="oldest">Cũ nhất</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <select
+                    value={pageSize}
+                    onChange={(e) => setPageSize(Number(e.target.value))}
+                    className="appearance-none h-[40px] pl-4 pr-10 rounded-lg border border-brand-500 bg-white text-sm font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand-500 shadow-sm cursor-pointer"
+                  >
+                    <option value={12}>12 tin / trang</option>
+                    <option value={24}>24 tin / trang</option>
+                    <option value={48}>48 tin / trang</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-brand-600">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="flex bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1 h-[40px] items-center">
+                  <button
+                    onClick={() => setLayout('grid')}
+                    className={`p-1.5 rounded ${layout === 'grid' ? 'bg-gray-100 dark:bg-gray-700 text-brand-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setLayout('list')}
+                    className={`p-1.5 rounded ${layout === 'list' ? 'bg-gray-100 dark:bg-gray-700 text-brand-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
-          </aside>
+
+
+          </div>
 
           {/* Job Grid */}
-          <main className="flex-1">
+          <main>
             {loading ? (
-              <div className="flex justify-center p-12">Đang tải...</div>
+              <div className="flex justify-center p-12">
+                <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
             ) : (
               <>
                 <JobGrid
@@ -259,57 +372,49 @@ export default function JobsPage() {
                   onLayoutChange={setLayout}
                   sortBy={sortBy}
                   onSortChange={setSortBy}
-                  onBookmark={handleBookmark}
-                  onApply={handleApply}
                   disablePagination={true}
                   totalCount={totalElements}
+                  hideHeader={true}
                 />
 
-                {/* Pagination */}
+                {/* Custom Pagination */}
                 {totalPages > 1 && (
-                  <div className="mt-8 flex justify-center items-center gap-2">
+                  <div className="mt-12 flex justify-center items-center gap-2">
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 0}
-                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                      className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-brand-600 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-700"
                     >
-                      Trước
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                     </button>
 
-                    {/* Page numbers */}
-                    <div className="flex gap-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i;
-                        } else if (currentPage < 3) {
-                          pageNum = i;
-                        } else if (currentPage > totalPages - 4) {
-                          pageNum = totalPages - 5 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => handlePageChange(pageNum)}
-                            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${pageNum === currentPage
-                              ? 'bg-brand-500 text-white'
-                              : 'border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
-                              }`}
-                          >
-                            {pageNum + 1}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) pageNum = i;
+                      else if (currentPage < 3) pageNum = i;
+                      else if (currentPage > totalPages - 4) pageNum = totalPages - 5 + i;
+                      else pageNum = currentPage - 2 + i;
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`w-10 h-10 flex items-center justify-center rounded-full font-medium transition-all ${pageNum === currentPage
+                            ? 'bg-brand-600 text-white shadow-lg scale-110'
+                            : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700'
+                            }`}
+                        >
+                          {pageNum + 1}
+                        </button>
+                      );
+                    })}
 
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage >= totalPages - 1}
-                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                      className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-brand-600 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:border-gray-700"
                     >
-                      Sau
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                     </button>
                   </div>
                 )}
@@ -317,42 +422,7 @@ export default function JobsPage() {
             )}
           </main>
         </div>
-
-        {/* Mobile Filter Button */}
-        <button
-          onClick={() => setShowFilters(true)}
-          className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-white shadow-theme-xl transition hover:bg-brand-600 hover:scale-110 lg:hidden"
-          aria-label="Open filters"
-        >
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
-          {activeFilterCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-error-500 text-xs font-bold text-white">
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
       </div>
-
-      {/* Mobile Filters Drawer */}
-      {showFilters && (
-        <div className="fixed inset-0 z-999999 lg:hidden">
-          <div
-            className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm animate-fade-in"
-            onClick={() => setShowFilters(false)}
-          />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white p-6 shadow-theme-xl animate-slide-up dark:bg-gray-900">
-            <JobFilters
-              filters={localFilters}
-              onFilterChange={handleFilterChange}
-              onReset={handleResetFilters}
-              isMobile
-              onClose={() => setShowFilters(false)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

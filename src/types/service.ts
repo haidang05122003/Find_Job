@@ -31,7 +31,7 @@ export interface FilterParams {
     status?: string;
     startDate?: string;
     endDate?: string;
-    [key: string]: string | number | boolean | undefined;
+    [key: string]: string | number | boolean | string[] | undefined;
 }
 
 /**

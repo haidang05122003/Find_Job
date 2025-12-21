@@ -43,24 +43,24 @@ export default function SignInForm() {
         const response = await authService.verifyToken();
         if (response.data) {
           const roles = response.data.roles || [];
-          const userRole = roles.length > 0 ? roles[0] : 'CANDIDATE';
+          const userRole = roles.length > 0 ? roles[0] : (response.data.role || 'CANDIDATE');
 
-          if (userRole === 'ADMIN') {
-            router.push("/admin/dashboard");
-          } else if (userRole === 'HR') {
+          if (userRole === 'ADMIN' || userRole === 'ROLE_ADMIN') {
+            router.push("/admin");
+          } else if (userRole === 'HR' || userRole === 'ROLE_HR') {
             try {
               const companyRes = await import("@/services/hr.service").then(m => m.hrService.getMyCompany());
               if (companyRes.data) {
                 if (companyRes.data.status === 'PENDING' || companyRes.data.status === 'REJECTED') {
                   router.push("/hr/company-status");
                 } else {
-                  router.push("/hr/dashboard");
+                  router.push("/hr");
                 }
               } else {
                 router.push("/hr/setup-company");
               }
             } catch (err) {
-              router.push("/hr/setup-company");
+              router.push("/hr/setup-company"); // Default to setup if getMyCompany fails (e.g. no company)
             }
           } else {
             router.push("/");

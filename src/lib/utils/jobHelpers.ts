@@ -5,8 +5,13 @@ import { Job } from '@/types/job';
 // ============================================
 
 export const getTimeAgo = (date: Date): string => {
+    if (!date || isNaN(date.getTime())) return 'Vừa xong';
+
     const now = new Date();
     const diff = now.getTime() - date.getTime();
+
+    if (diff < 0) return 'Vừa xong';
+
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
     if (days === 0) return 'Hôm nay';
@@ -66,13 +71,29 @@ export const sortJobs = (jobs: Job[], sortBy: string): Job[] => {
     }
 };
 
-export const filterJobsBySearch = (jobs: Job[], searchQuery: string): Job[] => {
-    if (!searchQuery) return jobs;
-
-    const query = searchQuery.toLowerCase();
+export const filterJobsBySearch = (jobs: Job[], query?: string): Job[] => {
+    if (!query) return jobs;
+    const lowerQuery = query.toLowerCase();
     return jobs.filter(job =>
-        job.title.toLowerCase().includes(query) ||
-        job.company.name.toLowerCase().includes(query) ||
-        job.description.toLowerCase().includes(query)
+        job.title.toLowerCase().includes(lowerQuery) ||
+        job.company.name.toLowerCase().includes(lowerQuery) ||
+        job.location?.toLowerCase().includes(lowerQuery) ||
+        job.skills?.some(skill => skill.toLowerCase().includes(lowerQuery)) ||
+        job.keywords?.some(kw => kw.toLowerCase().includes(lowerQuery))
     );
+};
+
+export const getJobTypeLabel = (jobType: string): string => {
+    const map: Record<string, string> = {
+        'full_time': 'Toàn thời gian',
+        'part_time': 'Bán thời gian',
+        'contract': 'Hợp đồng',
+        'internship': 'Thực tập',
+        'remote': 'Làm từ xa',
+        'temporary': 'Tạm thời',
+        'freelance': 'Tự do',
+        'full-time': 'Toàn thời gian',
+        'part-time': 'Bán thời gian',
+    };
+    return map[jobType] || jobType?.replace(/_/g, ' ') || 'Toàn thời gian';
 };

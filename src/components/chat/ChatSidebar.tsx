@@ -9,7 +9,7 @@ import { chatService } from '@/services/chat.service';
 import type { Conversation } from '@/types/chat';
 import { usePathname } from 'next/navigation';
 
-export default function ChatSidebar() {
+export default function ChatSidebar({ basePath = '/messages' }: { basePath?: string }) {
     const { user } = useAuth();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +35,7 @@ export default function ChatSidebar() {
 
     // Determine active ID from pathname (e.g. /messages/123)
     const activeConversationId = pathname?.split('/').pop();
-    const isMessageDetail = pathname?.includes('/messages/') && activeConversationId && activeConversationId !== 'messages';
+    const isMessageDetail = pathname?.includes(basePath + '/') && activeConversationId && activeConversationId !== 'chat' && activeConversationId !== 'messages';
 
     if (!user) return null;
 
@@ -109,10 +109,10 @@ export default function ChatSidebar() {
                         return (
                             <div className="px-2 py-1" key={conversation.id}>
                                 <Link
-                                    href={`/messages/${conversation.id}`}
+                                    href={`${basePath}/${conversation.id}`}
                                     className={`group block w-full rounded-xl p-3 text-left transition-all hover:bg-gray-100 dark:hover:bg-gray-800 ${activeConversationId === conversation.id
-                                            ? 'bg-blue-50 dark:bg-blue-900/20'
-                                            : ''
+                                        ? 'bg-blue-50 dark:bg-blue-900/20'
+                                        : ''
                                         }`}
                                 >
                                     <div className="flex gap-4">
@@ -151,11 +151,16 @@ export default function ChatSidebar() {
                                                 )}
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                {lastMessageContent && (
-                                                    <p className={`truncate text-sm ${conversation.unreadCount > 0 ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-500'}`}>
-                                                        {isOwnMessage ? 'Bạn: ' : ''}{lastMessageContent}
-                                                    </p>
-                                                )}
+                                                <p className={`truncate text-sm ${conversation.unreadCount > 0 ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-500'}`}>
+                                                    {lastMessageContent ? (
+                                                        <>
+                                                            {isOwnMessage && 'Bạn: '}
+                                                            {lastMessageContent}
+                                                        </>
+                                                    ) : (
+                                                        <span className="italic opacity-80">Bắt đầu cuộc trò chuyện</span>
+                                                    )}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>

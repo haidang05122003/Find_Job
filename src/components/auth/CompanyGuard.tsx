@@ -31,6 +31,16 @@ export default function CompanyGuard({ children }: { children: React.ReactNode }
                     return;
                 }
 
+                // Block Pending Members (who are not solving setup)
+                if (user.status === 'PENDING' && !user.isCompanyOwner) {
+                    // Redirect to a waiting screen
+                    if (pathname !== '/hr/pending') {
+                        router.push('/hr/pending');
+                    }
+                    setIsChecking(false);
+                    return;
+                }
+
                 try {
                     const res = await hrService.getMyCompany();
                     if (res.data) {

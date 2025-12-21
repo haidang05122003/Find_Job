@@ -7,11 +7,13 @@ export interface UserProfile {
     fullName?: string; // Added to match backend UserResponse
     username?: string; // Added to match backend UserResponse
     status?: string;   // Added to match backend UserResponse
+    isCompanyOwner?: boolean; // Added for HR role check
+    companyId?: number; // Backend sends Long -> number
     avatarUrl?: string;
     role?: string; // Backend sends singular role
     roles: UserRole[];
     activeRole: UserRole;
-    phone?: string;
+    readonly phone?: string;
     bio?: string;
     location?: {
         city: string;

@@ -6,7 +6,28 @@ interface JobOverviewSidebarProps {
     job: Job;
 }
 
+const LEVEL_LABELS: Record<string, string> = {
+    INTERN: 'Thực tập sinh',
+    FRESHER: 'Fresher',
+    JUNIOR: 'Junior',
+    MIDDLE: 'Middle',
+    SENIOR: 'Senior',
+    LEADER: 'Trưởng nhóm',
+    MANAGER: 'Trưởng phòng',
+    DIRECTOR: 'Giám đốc',
+    VICE_PRESIDENT: 'Phó chủ tịch',
+    // Fallbacks
+    STAFF: 'Nhân viên',
+    TEAM_LEADER: 'Trưởng nhóm',
+};
+
 const JobOverviewSidebar: React.FC<JobOverviewSidebarProps> = ({ job }) => {
+
+    const getLevelLabel = (level?: string) => {
+        if (!level) return 'Nhân viên';
+        return LEVEL_LABELS[level] || level;
+    };
+
     const infoItems = [
         {
             icon: (
@@ -17,7 +38,7 @@ const JobOverviewSidebar: React.FC<JobOverviewSidebarProps> = ({ job }) => {
                 </div>
             ),
             label: "Cấp bậc",
-            value: job.experienceLevel === 'entry' ? 'Nhân viên' : job.experienceLevel === 'mid' ? 'Chuyên viên' : 'Quản lý'
+            value: getLevelLabel(job.level)
         },
         {
             icon: (
@@ -54,23 +75,76 @@ const JobOverviewSidebar: React.FC<JobOverviewSidebarProps> = ({ job }) => {
         }
     ];
 
-    return (
-        <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
-            <h3 className="mb-6 text-xl font-bold text-gray-900 dark:text-white">
-                Thông tin chung
-            </h3>
+    const locations = job.locations && job.locations.length > 0 ? job.locations : [job.location];
+    const skills = job.skills || [];
+    const keywords = job.keywords || [];
 
-            <div className="space-y-6">
-                {infoItems.map((item, index) => (
-                    <div key={index} className="flex items-center gap-4">
-                        {item.icon}
-                        <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{item.label}</p>
-                            <p className="font-semibold text-gray-900 dark:text-white">{item.value}</p>
+    return (
+        <div className="space-y-6">
+            {/* 1. Thông tin chung (General Info) */}
+            <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+                <h3 className="mb-6 text-xl font-bold text-gray-900 dark:text-white">
+                    Thông tin chung
+                </h3>
+
+                <div className="space-y-6">
+                    {infoItems.map((item, index) => (
+                        <div key={index} className="flex items-center gap-4">
+                            {item.icon}
+                            <div>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{item.label}</p>
+                                <p className="font-semibold text-gray-900 dark:text-white">{item.value}</p>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
+
+            {/* 2. Kỹ năng cần có (Skills) */}
+            {skills.length > 0 && (
+                <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+                    <h3 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">
+                        Kỹ năng cần có
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                        {skills.map((skill, idx) => (
+                            <span key={idx} className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors cursor-pointer dark:bg-blue-900/30 dark:text-blue-300">
+                                {skill}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* 3. Khu vực (Locations) */}
+            <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+                <h3 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">
+                    Khu vực
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                    {locations.map((loc, idx) => (
+                        <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors cursor-pointer dark:bg-gray-800 dark:text-gray-300">
+                            {loc}
+                        </span>
+                    ))}
+                </div>
+            </div>
+
+            {/* 4. Từ khóa (Keywords/Tags) */}
+            {keywords.length > 0 && (
+                <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+                    <h3 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">
+                        Từ khóa
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                        {keywords.map((kw, idx) => (
+                            <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors cursor-pointer dark:bg-gray-800 dark:text-gray-300">
+                                {kw}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

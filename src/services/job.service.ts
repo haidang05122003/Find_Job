@@ -1,6 +1,28 @@
 import { BaseService } from './base.service';
 import type { BaseResponse, PageResponse } from '@/types/api';
-import type { Job, JobFilters } from '@/types/job';
+import type { Job } from '@/types/job';
+import type { QueryParams } from '@/types/service';
+
+export interface JobSearchParams extends QueryParams {
+    keyword?: string;
+    location?: string;
+    category?: string;
+    minSalary?: number;
+    maxSalary?: number;
+    employmentType?: string;
+    workMethod?: string;
+    experience?: string;
+    page?: number;
+    size?: number;
+    sort?: string;
+}
+
+// Helper to safely map string to union type
+function mapToUnion<T extends string>(value: string | undefined, validValues: readonly T[], defaultValue: T): T {
+    if (!value) return defaultValue;
+    const normalized = value.toLowerCase() as T;
+    return validValues.includes(normalized) ? normalized : defaultValue;
+}
 
 // Backend DTO
 export interface JobPostResponse {
@@ -24,10 +46,15 @@ export interface JobPostResponse {
     createdAt: string;
     experience: string;
     quantity: number;
+    level?: string;
     gender: string;
     workMethod: string;
     address: string;
+    locations?: string[];
+    skills?: string[];
+    keywords?: string[];
     isBookmarked?: boolean;
+    applicationsCount?: number;
 }
 
 export interface CategoryResponse {
@@ -40,12 +67,12 @@ class JobService extends BaseService {
     /**
      * Search jobs with filters
      */
-    async searchJobs(params: any): Promise<BaseResponse<PageResponse<Job>>> {
+    async searchJobs(params: JobSearchParams): Promise<BaseResponse<PageResponse<Job>>> {
         const response = await this.getPaged<JobPostResponse>('/jobs', params);
 
         if (response.success && response.data) {
             // Transform to Frontend Job Interface
-            const transformedContent = response.data.content.map(this.transformToJob);
+            const transformedContent = response.data.content.map(this.transformToJob.bind(this));
 
             return {
                 ...response,
@@ -56,7 +83,22 @@ class JobService extends BaseService {
             };
         }
 
-        return response as any;
+        // Return empty page structure on error or empty response to maintain type safety
+        return {
+            success: false,
+            code: 500,
+            message: response.message || 'Failed to fetch jobs',
+            data: {
+                content: [],
+                totalPages: 0,
+                totalElements: 0,
+                last: true,
+                size: 0,
+                number: 0,
+                first: true,
+                empty: true
+            }
+        };
     }
 
     /**
@@ -72,7 +114,13 @@ class JobService extends BaseService {
             };
         }
 
-        return response as any;
+        // Return error response structure
+        return {
+            success: false,
+            code: 404,
+            message: response.message || 'Job not found',
+            data: null as unknown as Job // Explicit null for not found or error, handled by caller
+        };
     }
 
     /**
@@ -90,12 +138,26 @@ class JobService extends BaseService {
     }
 
     /**
+     * Bookmark a job
+     */
+    async bookmarkJob(id: string): Promise<BaseResponse<boolean>> {
+        return this.post(`/jobs/${id}/bookmark`, {});
+    }
+
+    /**
+     * Unbookmark a job
+     */
+    async unbookmarkJob(id: string): Promise<BaseResponse<boolean>> {
+        return this.delete(`/jobs/${id}/bookmark`);
+    }
+
+    /**
      * Transform Backend DTO to Frontend Model
      */
     private transformToJob(dto: JobPostResponse): Job {
         return {
-            id: dto.id.toString(),
-            title: dto.title,
+            id: dto.id ? dto.id.toString() : `unk-${Math.random()}`,
+            title: dto.title || 'Untitled Job',
             company: {
                 id: dto.companyId ? dto.companyId.toString() : '0',
                 name: dto.companyName,
@@ -103,28 +165,32 @@ class JobService extends BaseService {
                 size: dto.companySize || 'N/A',
             },
             location: dto.location || dto.address,
-            locationType: (dto.workMethod?.toLowerCase() as any) || 'onsite',
-            jobType: (dto.employmentType?.toLowerCase() as any) || 'full-time',
-            experienceLevel: (dto.experience?.toLowerCase() as any) || 'entry',
+            locations: dto.locations || [],
+            skills: dto.skills || [],
+            keywords: dto.keywords || [],
+            locationType: mapToUnion(dto.workMethod, ['onsite', 'remote', 'hybrid'], 'onsite'),
+            jobType: mapToUnion(dto.employmentType, ['full-time', 'part-time', 'contract', 'internship'], 'full-time'),
+            experienceLevel: mapToUnion(dto.experience, ['entry', 'mid', 'senior', 'lead'], 'entry'),
             experience: dto.experience || 'Không yêu cầu',
             salary: {
-                min: dto.salaryMin,
-                max: dto.salaryMax,
+                min: dto.salaryMin || 0,
+                max: dto.salaryMax || 0,
                 currency: dto.salaryUnit || 'VND',
                 period: 'month',
             },
-            description: dto.description,
-            requirements: dto.requirements ? [dto.requirements] : [], // TODO: Split by newline if needed
-            responsibilities: [], // Backend merges description?
+            description: dto.description || '',
+            requirements: dto.requirements ? [dto.requirements] : [],
+            responsibilities: [],
             benefits: dto.benefits ? [dto.benefits] : [],
             category: dto.categoryName,
-            tags: [],
+            tags: dto.keywords || [],
             postedAt: new Date(dto.createdAt),
             expiresAt: new Date(dto.deadline),
             isFeatured: false,
             isBookmarked: dto.isBookmarked || false,
-            applicantsCount: 0,
+            applicantsCount: dto.applicationsCount || 0,
             quantity: dto.quantity || 1,
+            level: dto.level,
             gender: dto.gender || 'Không yêu cầu',
         };
     }

@@ -8,6 +8,7 @@ export interface FilterState {
   salaryRange: { min: number; max: number };
   datePosted: string;
   locationType: string[];
+  jobLevels: string[];
 }
 
 interface JobFiltersProps {
@@ -58,8 +59,19 @@ const JobFilters: React.FC<JobFiltersProps> = ({
     { value: 'HYBRID', label: 'Linh hoạt' },
   ];
 
+  const levelOptions = [
+    { value: 'INTERN', label: 'Thực tập sinh' },
+    { value: 'FRESHER', label: 'Fresher' },
+    { value: 'JUNIOR', label: 'Junior' },
+    { value: 'MIDDLE', label: 'Middle' },
+    { value: 'SENIOR', label: 'Senior' },
+    { value: 'LEADER', label: 'Trưởng nhóm' },
+    { value: 'MANAGER', label: 'Trưởng phòng' },
+    { value: 'DIRECTOR', label: 'Giám đốc' },
+  ];
+
   const handleCheckboxChange = (
-    field: 'jobTypes' | 'experienceLevels' | 'locationType',
+    field: 'jobTypes' | 'experienceLevels' | 'locationType' | 'jobLevels',
     value: string
   ) => {
     const currentValues = filters[field] as string[];
@@ -170,6 +182,29 @@ const JobFilters: React.FC<JobFiltersProps> = ({
             >
               <RadioCircle selected={filters.experienceLevels.includes(level.value)} />
               <span className={`text-sm ${filters.experienceLevels.includes(level.value)
+                ? 'text-gray-900 dark:text-white'
+                : 'text-gray-600 dark:text-gray-400'
+                }`}>
+                {level.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Job Level */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Cấp bậc</h3>
+        <div className="grid grid-cols-2 gap-2">
+          {levelOptions.map((level) => (
+            <button
+              key={level.value}
+              type="button"
+              onClick={() => handleCheckboxChange('jobLevels', level.value)}
+              className="flex items-center gap-2 py-1 text-left"
+            >
+              <RadioCircle selected={filters.jobLevels.includes(level.value)} />
+              <span className={`text-sm ${filters.jobLevels.includes(level.value)
                 ? 'text-gray-900 dark:text-white'
                 : 'text-gray-600 dark:text-gray-400'
                 }`}>

@@ -12,9 +12,10 @@ import Button from '@/components/shared/Button';
 import Modal from '@/components/shared/Modal';
 import ReportModal from '@/components/jobs/ReportModal';
 import { useToast } from '@/context/ToastContext';
+import { useAuth } from '@/context/AuthContext';
 import { jobService } from '@/services/job.service';
 import { favoriteService } from '@/services/favorite.service';
-import { ApplyJobModal } from '@/components/jobs/apply-job-modal';
+import JobApplicationModal from '@/components/jobs/JobApplicationModal';
 import { t } from '@/lib/i18n';
 import Breadcrumb, { getJobDetailBreadcrumbs } from '@/components/shared/Breadcrumb';
 import type { Job } from '@/types/job';
@@ -23,7 +24,8 @@ import type { Company } from '@/types/company';
 export default function JobDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { success } = useToast();
+  const { success, warning, info } = useToast();
+  const { isAuthenticated } = useAuth();
   const id = params.id as string;
 
   const [job, setJob] = useState<Job | null>(null);
@@ -81,6 +83,10 @@ export default function JobDetailPage() {
   }, []);
 
   const handleBookmark = async () => {
+    if (!isAuthenticated) {
+      info('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để lưu công việc này');
+      return;
+    }
     try {
       if (isBookmarked) {
         await favoriteService.removeFavorite(id);
@@ -98,6 +104,10 @@ export default function JobDetailPage() {
   };
 
   const handleApply = () => {
+    if (!isAuthenticated) {
+      info('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để ứng tuyển');
+      return;
+    }
     setShowApplyModal(true);
   };
 
@@ -122,15 +132,7 @@ export default function JobDetailPage() {
         </div>
 
         {/* Back Button */}
-        <button
-          onClick={() => router.back()}
-          className="mb-6 flex items-center gap-2 text-gray-600 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-        >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          {t('common.back')}
-        </button>
+
 
         {/* Job Header */}
         <JobDetailHeader
@@ -235,10 +237,13 @@ export default function JobDetailPage() {
 
       {/* Apply Modal */}
       {showApplyModal && (
-        <ApplyJobModal
+        <JobApplicationModal
+          isOpen={showApplyModal}
           onClose={() => setShowApplyModal(false)}
           jobTitle={job.title}
+          companyName={job.company.name}
           jobId={id}
+          locations={job.locations && job.locations.length > 0 ? job.locations : [job.location]}
         />
       )}
 

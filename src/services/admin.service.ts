@@ -51,6 +51,28 @@ export interface ReportResolutionData {
     note?: string;
 }
 
+
+export interface UserSearchParams extends QueryParams {
+    role?: string;
+    status?: string;
+    keyword?: string;
+}
+
+export interface ReportSearchParams extends QueryParams {
+    status?: string;
+    type?: string;
+}
+
+export interface JobFilterParams extends QueryParams {
+    status?: string;
+    keyword?: string;
+}
+
+export interface ReportResolutionPayload {
+    status: string;
+    action?: string;
+}
+
 /**
  * Category creation data
  */
@@ -84,14 +106,14 @@ class AdminService extends BaseService {
     /**
      * Get all users
      */
-    async getAllUsers(params?: { page?: number; limit?: number; role?: string; status?: string; keyword?: string }): Promise<BaseResponse<PageResponse<UserProfile>>> {
-        const queryParams: any = {
-            page: (params?.page || 1) - 1,
-            size: params?.limit || 10,
+    async getAllUsers(params?: UserSearchParams): Promise<BaseResponse<PageResponse<UserProfile>>> {
+        const queryParams: UserSearchParams = {
+            page: (Number(params?.page) || 1) - 1,
+            size: Number(params?.size || params?.limit || 10),
+            role: params?.role,
+            status: params?.status,
+            keyword: params?.keyword
         };
-        if (params?.role) queryParams.role = params.role;
-        if (params?.status) queryParams.status = params.status;
-        if (params?.keyword) queryParams.keyword = params.keyword;
 
         return this.getPaged<UserProfile>('/admin/users', queryParams);
     }
@@ -99,13 +121,13 @@ class AdminService extends BaseService {
     /**
      * Get all reports
      */
-    async getReports(params?: { page?: number; limit?: number; status?: string; type?: string }): Promise<BaseResponse<PageResponse<Report>>> {
-        const queryParams: any = {
-            page: (params?.page || 1) - 1,
-            size: params?.limit || 10,
+    async getReports(params?: ReportSearchParams): Promise<BaseResponse<PageResponse<Report>>> {
+        const queryParams: ReportSearchParams = {
+            page: (Number(params?.page) || 1) - 1,
+            size: Number(params?.size || params?.limit || 10),
+            status: params?.status,
+            type: params?.type
         };
-        if (params?.status) queryParams.status = params.status;
-        if (params?.type) queryParams.type = params.type;
 
         return this.getPaged<Report>('/admin/reports', queryParams);
     }
@@ -180,6 +202,20 @@ class AdminService extends BaseService {
     // ==================== Job Management ====================
 
     /**
+     * Get all jobs
+     */
+    async getAllJobs(params?: JobFilterParams): Promise<BaseResponse<PageResponse<Job>>> {
+        const queryParams: JobFilterParams = {
+            page: (Number(params?.page) || 1) - 1,
+            size: Number(params?.size || params?.limit || 10),
+            status: params?.status,
+            keyword: params?.keyword
+        };
+
+        return this.getPaged<Job>('/admin/jobs', queryParams);
+    }
+
+    /**
      * Get pending jobs for approval
      */
     async getPendingJobs(params?: QueryParams): Promise<BaseResponse<PageResponse<Job>>> {
@@ -215,11 +251,11 @@ class AdminService extends BaseService {
      * Resolve report
      */
     async resolveReport(id: string, data: ReportResolutionData): Promise<BaseResponse<string>> {
-        const payload = {
+        const payload: ReportResolutionPayload = {
             status: data.status.toUpperCase(),
-            action: data.action // Should strictly be DELETE_JOB, LOCK_USER, NONE if provided
+            action: data.action
         };
-        return this.patch<string, any>(`/admin/reports/${id}`, payload);
+        return this.patch<string, ReportResolutionPayload>(`/admin/reports/${id}`, payload);
     }
 
     // ==================== Category Management ====================
@@ -249,8 +285,7 @@ class AdminService extends BaseService {
      * Create skill
      */
     async createSkill(data: { name: string }): Promise<BaseResponse<Category>> {
-        // Reuse CategoryCreateData or just pass name
-        return this.post<Category, any>('/admin/skills', { name: data.name });
+        return this.post<Category, { name: string }>('/admin/skills', { name: data.name });
     }
 
     /**

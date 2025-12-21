@@ -15,10 +15,14 @@ export interface Job {
         size?: string; // Added field
     };
     location: string;
+    locations?: string[];
+    skills?: string[];
+    keywords?: string[];
     locationType: 'onsite' | 'remote' | 'hybrid';
     jobType: 'full-time' | 'part-time' | 'contract' | 'internship';
     experienceLevel: 'entry' | 'mid' | 'senior' | 'lead';
     experience?: string;
+    level?: string;
     salary: {
         min: number;
         max: number;
@@ -40,8 +44,12 @@ export interface Job {
     gender?: string;
     // Backend compatibility
     companyName?: string;
+    companyLogo?: string;
     createdAt?: string | Date;
     status?: string;
+    salaryMin?: number;
+    salaryMax?: number;
+    deadline?: string | Date;
 }
 
 export interface JobDetail extends Job {
@@ -61,6 +69,7 @@ export interface JobDetail extends Job {
 export interface JobFilters {
     jobTypes: string[];
     experienceLevels: string[];
+    jobLevels: string[];
     salaryRange: { min: number; max: number };
     datePosted?: string;
     locationType?: string[];

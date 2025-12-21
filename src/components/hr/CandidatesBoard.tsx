@@ -12,7 +12,7 @@ import { PAGINATION } from "@/lib/constants";
 
 const statusColor = (status: string) => {
   const s = status?.toLowerCase();
-  if (s === "interview" || s === "reviewing") {
+  if (s === "interview" || s === "interview_sent") {
     return "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300";
   }
   if (s === "rejected" || s === "withdrawn") {
@@ -33,15 +33,12 @@ const statusColor = (status: string) => {
 const statusLabel = (status: string) => {
   const s = status?.toLowerCase();
   switch (s) {
-    case "applied": return "Chờ duyệt";
+    case "applied": return "Chờ duyệt"; // Fallback
     case "pending": return "Chờ duyệt";
-    case "reviewing": return "Đang xem xét";
-    case "shortlisted": return "Lọt vào danh sách";
     case "approved": return "Đã duyệt";
-    case "interview": return "Đang phỏng vấn";
+    case "interview": return "Đã gửi thư phỏng vấn";
     case "offered": return "Đã gửi offer";
     case "rejected": return "Đã từ chối";
-    case "withdrawn": return "Đã rút";
     case "hired": return "Đã tuyển";
     default: return status;
   }
@@ -202,7 +199,7 @@ const CandidatesBoard: React.FC = () => {
           <div className="flex gap-2">
             {[
               { value: "all", label: "Tất cả" },
-              { value: "APPLIED", label: "Chờ duyệt" },
+              { value: "PENDING", label: "Chờ duyệt" },
               { value: "APPROVED", label: "Đã duyệt" },
               { value: "INTERVIEW", label: "Phỏng vấn" },
               { value: "OFFERED", label: "Offer" },
@@ -265,6 +262,7 @@ const CandidatesBoard: React.FC = () => {
                 <tr>
                   <th className="pb-3 font-semibold">Ứng viên</th>
                   <th className="pb-3 font-semibold">Tin ứng tuyển</th>
+                  <th className="pb-3 font-semibold">Địa điểm</th>
                   <th className="pb-3 font-semibold">Trạng thái</th>
                   <th className="pb-3 font-semibold">Ngày ứng tuyển</th>
                   <th className="pb-3 text-right font-semibold">Thao tác</th>
@@ -287,6 +285,7 @@ const CandidatesBoard: React.FC = () => {
                       </div>
                     </td>
                     <td className="py-3">{app.jobTitle}</td>
+                    <td className="py-3 text-brand-600 font-medium">{app.desiredLocation || "N/A"}</td>
                     <td className="py-3">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-medium ${statusColor(app.status)}`}
@@ -314,7 +313,7 @@ const CandidatesBoard: React.FC = () => {
                           </button>
                         )}
 
-                        {app.status.toLowerCase() === "applied" && (
+                        {app.status.toLowerCase() === "pending" && (
                           <>
                             <button
                               onClick={() => handleStatusChange(app.id, "APPROVED")}

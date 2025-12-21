@@ -30,7 +30,7 @@ class CategoryService extends BaseService {
                 description: item.description,
                 slug: item.name.toLowerCase().replace(/ /g, '-'),
                 icon: '💼',
-                jobCount: 0,
+                jobCount: item.jobCount || 0,
                 color: 'blue',
                 subcategories: []
             }));

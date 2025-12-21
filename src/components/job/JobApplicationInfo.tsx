@@ -25,24 +25,25 @@ const JobApplicationInfo: React.FC<JobApplicationInfoProps> = ({
         <div className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 sm:p-8">
 
             {/* Location */}
+            {/* Location */}
             <div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                     Địa điểm làm việc <span className="text-sm font-normal text-gray-500 italic">(đã được cập nhật theo Danh mục Hành chính mới)</span>
                 </h3>
-                <p className="mt-2 text-gray-700 dark:text-gray-300">
-                    - {job.location}
-                </p>
+                <div className="mt-2 text-gray-700 dark:text-gray-300">
+                    {job.locations && job.locations.length > 0 ? (
+                        <ul className="list-none space-y-1">
+                            {job.locations.map((loc, index) => (
+                                <li key={index}>- {loc}</li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p>- {job.location}</p>
+                    )}
+                </div>
             </div>
 
-            {/* Working Time */}
-            <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                    Thời gian làm việc
-                </h3>
-                <ul className="mt-2 list-disc pl-5 text-gray-700 dark:text-gray-300">
-                    <li>Thứ 2 - Thứ 6 (từ 08:00 đến 17:00)</li>
-                </ul>
-            </div>
+
 
             {/* How to Apply */}
             <div>

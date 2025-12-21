@@ -8,6 +8,7 @@ import { t } from '@/lib/i18n';
 import { jobService } from '@/services/job.service';
 import { companyService } from '@/services/company.service';
 import { candidateService } from '@/services/candidate.service';
+import { categoryService } from '@/services/category.service';
 import { AnimatePresence, motion } from 'framer-motion';
 
 interface HeroSectionProps {
@@ -38,6 +39,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   });
 
   const [categories, setCategories] = useState<string[]>([]);
+  const [popularCategories, setPopularCategories] = useState<any[]>([]);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const categoryRef = React.useRef<HTMLDivElement>(null);
 
@@ -53,25 +55,38 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   }, []);
 
   useEffect(() => {
-    // Fake data - Removed API calls
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
-        // Mock data loading simulation if needed, but for now instant set
+
+        // Optimize: Only fetch categories needed for dynamic UI, use static stats
+        const categoriesRes = await categoryService.getAllCategories();
+
+        if (categoriesRes.data) {
+          setCategories(categoriesRes.data.map(c => c.name));
+        }
+
+        if (categoriesRes.success && categoriesRes.data) {
+          // Sort by jobCount (descending) and take top 10
+          const sortedCategories = [...categoriesRes.data]
+            .sort((a, b) => (b.jobCount || 0) - (a.jobCount || 0))
+            .slice(0, 10);
+          setPopularCategories(sortedCategories);
+        }
+
+        // Use static data to reduce API calls as requested
         setStats({
           jobs: 1250,
-          companies: 350,
-          candidates: 8500,
+          companies: 80,
+          candidates: 4500,
           newJobs: 120,
         });
 
-        // Mock categories if needed or just leave empty/static
-        setCategories(['IT - Phần mềm', 'Marketing', 'Kế toán', 'Hành chính']);
       } catch (error) {
-        console.error('Error fetching hero stats:', error);
+        console.error('Error fetching hero data:', error);
       }
     };
 
-    fetchStats();
+    fetchData();
   }, []);
 
   const [jobTitle, setJobTitle] = useState('');
@@ -94,52 +109,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [jobTitle, location, category, router]);
 
-  const quickFilters = [
-    {
-      label: 'Remote',
-      icon: (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-      ),
-      filter: { locationType: ['remote'] }
-    },
-    {
-      label: 'Full-time',
-      icon: (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      ),
-      filter: { jobTypes: ['full-time'] }
-    },
-    {
-      label: 'IT - Software',
-      icon: (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      ),
-      filter: { category: 'IT - Software' }
-    },
-    {
-      label: 'Marketing',
-      icon: (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-        </svg>
-      ),
-      filter: { category: 'Marketing' }
-    },
-  ];
+  // Static filters removed in favor of dynamic categories
 
-  const handleQuickFilter = (filter: Record<string, unknown>) => {
+  const handleQuickFilter = (categoryName: string) => {
     const params = new URLSearchParams();
-
-    if ((filter.locationType as string[])?.includes('remote')) params.set('locations', 'Remote');
-    if ((filter.jobTypes as string[])?.includes('full-time')) params.set('jobTypes', 'FULL_TIME');
-    if (filter.category) params.set('categories', filter.category as string);
-
+    params.set('categories', categoryName);
     router.push(`/jobs?${params.toString()}`);
   };
 
@@ -298,15 +272,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
             {/* Quick Filters */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-              <span className="text-sm font-semibold text-blue-200">{t('jobs.searchPlaceholder')}:</span>
-              {quickFilters.map((filter) => (
+              <span className="text-sm font-semibold text-blue-200">Gợi ý:</span>
+              {popularCategories.map((cat) => (
                 <button
-                  key={filter.label}
-                  onClick={() => handleQuickFilter(filter.filter)}
+                  key={cat.id || cat.name}
+                  onClick={() => handleQuickFilter(cat.name)}
                   className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-white hover:text-blue-600 hover:shadow-lg hover:scale-105 active:scale-95"
                 >
-                  <span className="text-lg">{filter.icon}</span>
-                  {filter.label}
+                  {cat.name}
                 </button>
               ))}
             </div>

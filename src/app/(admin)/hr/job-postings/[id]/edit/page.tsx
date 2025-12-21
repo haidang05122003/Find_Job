@@ -38,7 +38,11 @@ export default function EditJobPage() {
                         workMethod: job.workMethod,
                         experience: job.experience,
                         quantity: job.quantity,
-                        gender: job.gender,
+                        gender: job.gender === "ALL" ? "ANY" : job.gender,
+                        level: job.level,
+                        skills: job.skills || [],
+                        keywords: job.keywords || [],
+                        locations: job.locations && job.locations.length > 0 ? job.locations : (job.location ? [job.location] : []),
                         deadline: job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : "",
                     });
                 }

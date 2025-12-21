@@ -37,10 +37,10 @@ export default function NotificationDropdown() {
         onClick={toggleDropdown}
       >
         <span
-          className={`absolute right-0 top-0.5 z-10 h-2 w-2 rounded-full bg-orange-400 ${unreadCount === 0 ? "hidden" : "flex"
+          className={`absolute -top-0.5 -right-0.5 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-1 ring-white dark:ring-gray-900 ${unreadCount === 0 ? "hidden" : "flex"
             }`}
         >
-          <span className="absolute inline-flex w-full h-full bg-orange-400 rounded-full opacity-75 animate-ping"></span>
+          {unreadCount > 99 ? '99+' : unreadCount}
         </span>
         <svg
           className="fill-current"

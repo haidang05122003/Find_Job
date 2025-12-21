@@ -58,12 +58,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (token) {
-      setState(prev => ({ ...prev, token, isLoading: true }));
+      // Don't set loading true here avoids flicker, just fetch
+      // setState(prev => ({ ...prev, token, isLoading: true })); 
+      // Actually we need to set token at least.
+      setState(prev => ({ ...prev, token }));
       fetchUser();
     } else {
       setState({ user: null, isAuthenticated: false, isLoading: false });
     }
   }, [fetchUser]);
+
+  // Polling for PENDING users to auto-update status when approved
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    // Only poll if authenticated AND status is PENDING (and not Owner, though Owners usually aren't pending)
+    if (state.isAuthenticated && state.user?.status === 'PENDING') {
+      intervalId = setInterval(() => {
+        // Silent fetch (don't set loading state globaly to avoid UI flickering)
+        userService.getCurrentUser().then(response => {
+          if (response.success && response.data) {
+            // Only update if status changed or data changed significantly
+            setState(prev => {
+              if (prev.user?.status !== response.data?.status) {
+                return { ...prev, user: response.data };
+              }
+              return prev;
+            });
+          }
+        }).catch(err => console.error("Polling user status failed", err));
+      }, 3000); // Check every 3 seconds for fast response
+    }
+    return () => clearInterval(intervalId);
+  }, [state.isAuthenticated, state.user?.status]);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {

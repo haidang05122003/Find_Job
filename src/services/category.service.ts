@@ -9,6 +9,18 @@ export type { Category };
  * Category Service
  * Handles job category operations
  */
+
+interface CategoryDto {
+    id: number;
+    name: string;
+    description?: string;
+    jobCount?: number;
+}
+
+/**
+ * Category Service
+ * Handles job category operations
+ */
 class CategoryService extends BaseService {
     /**
      * Get paginated categories for admin
@@ -16,18 +28,17 @@ class CategoryService extends BaseService {
     async getCategories(page: number = 0, size: number = 10): Promise<BaseResponse<PageResponse<Category>>> {
         return this.getPaged<Category>('/categories/paginated', { page, size });
     }
-
     /**
      * Get All Categories
      */
     async getAllCategories(): Promise<BaseResponse<Category[]>> {
-        const response = await this.get<any[]>('/categories');
+        const response = await this.get<CategoryDto[]>('/categories');
 
         if (response.success && response.data) {
-            const transformedCategories: Category[] = response.data.map((item: any) => ({
+            const transformedCategories: Category[] = response.data.map((item) => ({
                 id: item.id.toString(),
                 name: item.name,
-                description: item.description,
+                description: item.description || '',
                 slug: item.name.toLowerCase().replace(/ /g, '-'),
                 icon: '💼',
                 jobCount: item.jobCount || 0,
@@ -41,7 +52,7 @@ class CategoryService extends BaseService {
             };
         }
 
-        return response as any;
+        return { ...response, data: [] } as unknown as BaseResponse<Category[]>;
     }
 
 

@@ -10,6 +10,7 @@ interface NotificationContextValue {
     notifications: Notification[];
     unreadCount: number;
     markAsRead: (id: string) => Promise<void>;
+    markAllAsRead: () => Promise<void>;
     fetchNotifications: () => Promise<void>;
 }
 
@@ -33,7 +34,11 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
             const res = await notificationService.getNotifications({ size: 10 });
             if (res.success && res.data) {
                 setNotifications(res.data.content);
-                setUnreadCount(res.data.content.filter(n => !n.isRead).length);
+            }
+            // Fetch separate unread count (accurate total)
+            const countRes = await notificationService.getUnreadCount();
+            if (countRes.success && countRes.data) {
+                setUnreadCount(countRes.data.count);
             }
         } catch (error) {
             console.error('Failed to fetch notifications', error);
@@ -93,8 +98,18 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         }
     };
 
+    const markAllAsRead = async () => {
+        try {
+            await notificationService.markAllAsRead();
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+            setUnreadCount(0);
+        } catch (error) {
+            console.error('Failed to mark all notifications as read', error);
+        }
+    };
+
     return (
-        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, fetchNotifications }}>
+        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, fetchNotifications }}>
             {children}
         </NotificationContext.Provider>
     );

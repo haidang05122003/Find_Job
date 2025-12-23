@@ -236,6 +236,20 @@ class AdminService extends BaseService {
         return this.delete<string>(`/admin/jobs/${id}`);
     }
 
+    /**
+     * Lock job (Violation)
+     */
+    async lockJob(id: string): Promise<BaseResponse<string>> {
+        return this.patch<string>(`/admin/jobs/${id}/lock`);
+    }
+
+    /**
+     * Unlock job (Reopen)
+     */
+    async unlockJob(id: string): Promise<BaseResponse<string>> {
+        return this.patch<string>(`/admin/jobs/${id}/unlock`);
+    }
+
     // ==================== Report Management ====================
 
 

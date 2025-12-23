@@ -19,12 +19,13 @@ import {
   ShareIcon,
   ShieldIcon,
   CheckIcon,
+  EditIcon,
 } from "@/components/shared/icons";
 import { fadeInVariants } from "@/lib/animations";
 import { candidateService } from "@/services/candidate.service";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
-import { Resume, CandidateProfile } from "@/types/candidate";
+import { Resume, CandidateProfile, CandidateEducation, CandidateExperience } from "@/types/candidate";
 
 
 type TabType = "personal" | "profile" | "social" | "account";
@@ -42,11 +43,12 @@ export default function PersonalSettingsPage() {
   const [formData, setFormData] = useState({
     fullName: "",
     headline: "",
-    education: "",
     aboutMe: "",
     avatarUrl: "",
     phone: "",
-    address: ""
+    address: "",
+    dateOfBirth: "",
+    gender: "Other"
   });
 
   const [cvs, setCvs] = useState<Resume[]>([]);
@@ -62,16 +64,19 @@ export default function PersonalSettingsPage() {
         setFormData({
           fullName: data.fullName || "",
           headline: data.title || "",
-          education: data.education || "",
           aboutMe: data.aboutMe || "",
           avatarUrl: data.avatarUrl || "",
           phone: data.phone || "",
-          address: data.address || ""
+          address: data.address || "",
+          dateOfBirth: data.dateOfBirth || "",
+          gender: data.gender || "Other"
         });
         setCvs(data.cvs || []);
       }
-    } catch (error) {
-      console.error("Failed to load profile", error);
+    } catch (error: any) {
+      console.error("Failed to load profile:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
+      toastError(error?.message || "Không thể tải thông tin hồ sơ");
     }
   };
 
@@ -108,15 +113,11 @@ export default function PersonalSettingsPage() {
       const response = await candidateService.updateProfile({
         // Fields managed in this form
         title: formData.headline,
-        education: formData.education,
         aboutMe: formData.aboutMe,
         phone: formData.phone,
         address: formData.address,
-
-        // Required fields preserved from existing profile
-        experience: fullProfile.experience || "",
-        dateOfBirth: fullProfile.dateOfBirth || "",
-        gender: fullProfile.gender || "Other", // Default fallback if needed
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
         skills: fullProfile.skills || []
       });
       if (response.success) {
@@ -125,8 +126,9 @@ export default function PersonalSettingsPage() {
         setFullProfile({
           ...fullProfile,
           title: formData.headline,
-          education: formData.education,
           aboutMe: formData.aboutMe,
+          phone: formData.phone,
+          address: formData.address,
         });
       }
     } catch (error: any) {
@@ -182,6 +184,7 @@ export default function PersonalSettingsPage() {
       toastError("Thao tác thất bại");
     }
   };
+
 
 
 
@@ -266,40 +269,49 @@ export default function PersonalSettingsPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label>Học vấn</Label>
+                      <Label>Số điện thoại</Label>
                       <Input
-                        type="text"
-                        value={formData.education}
-                        onChange={(e) => setFormData({ ...formData, education: e.target.value })}
-                        placeholder="VD: Đại học Bách Khoa..."
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="VD: 0912345678"
                       />
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Số điện thoại</Label>
-                        <Input
-                          type="tel"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          placeholder="VD: 0912345678"
-                        />
-                      </div>
-                      <div>
-                        <Label>Địa chỉ / Khu vực</Label>
-                        <Input
-                          type="text"
-                          value={formData.address}
-                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                          placeholder="VD: Hà Nội, TP.HCM..."
-                        />
-                      </div>
+                    <div>
+                      <Label>Địa chỉ</Label>
+                      <Input
+                        type="text"
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        placeholder="VD: Hà Nội, TP.HCM..."
+                      />
                     </div>
                   </div>
 
-
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Ngày sinh</Label>
+                      <Input
+                        type="date"
+                        value={formData.dateOfBirth}
+                        onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Giới tính</Label>
+                      <select
+                        value={formData.gender}
+                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                        className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white h-[46px]"
+                      >
+                        <option value="Male">Nam</option>
+                        <option value="Female">Nữ</option>
+                        <option value="Other">Khác</option>
+                      </select>
+                    </div>
+                  </div>
 
                   <div>
                     <Label>Giới thiệu (Bio)</Label>

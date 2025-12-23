@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { useChat } from '@/context/ChatContext';
 import Button from './Button';
 
@@ -63,10 +64,14 @@ const ChatWidget: React.FC = () => {
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-800">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-white">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm border border-gray-100 overflow-hidden">
+                <Image
+                  src="/images/logo/logo-icon.png"
+                  alt="JobViet"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 object-contain"
+                />
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -96,8 +101,8 @@ const ChatWidget: React.FC = () => {
               >
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-2 ${message.sender === 'user'
-                      ? 'bg-brand-500 text-white'
-                      : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white'
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white'
                     }`}
                 >
                   <p className="text-sm">{message.text}</p>

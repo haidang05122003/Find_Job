@@ -1,6 +1,6 @@
 import { BaseService } from './base.service';
 import type { BaseResponse, PageResponse } from '@/types/api';
-import type { CandidateProfile, CandidateProfileRequest, Resume, Skill } from '@/types/candidate';
+import type { CandidateProfile, CandidateProfileRequest, Resume, Skill, CandidateEducation, CandidateExperience } from '@/types/candidate';
 import type { QueryParams } from '@/types/service';
 
 export interface CandidateSearchParams extends QueryParams {
@@ -11,16 +11,17 @@ export interface CandidateSearchParams extends QueryParams {
 
 export interface PublicCandidateResponse {
     id: number;
+    userId: number; // Add for chat
     fullName: string;
     avatarUrl: string;
     title: string;
     aboutMe: string;
     email: string;
     phone: string;
-    education: string;
+    educations?: CandidateEducation[];
     gender: string;
     dateOfBirth: string;
-    experience: string;
+    experiences?: CandidateExperience[];
     address: string;
     skills: { id: number; skillName: string; skillLevel: string }[];
     socialLinks?: { id: number; platform: string; url: string }[];
@@ -54,7 +55,7 @@ class CandidateService extends BaseService {
      */
     async searchCandidates(params?: CandidateSearchParams): Promise<BaseResponse<PageResponse<PublicCandidateResponse>>> {
         const queryParams: CandidateSearchParams = {
-            page: (Number(params?.page) || 1) - 1,
+            page: params?.page ?? 0,
             size: Number(params?.size || params?.limit || 10),
             keyword: params?.keyword,
             location: params?.location,

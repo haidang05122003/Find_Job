@@ -23,6 +23,15 @@ const statusLabels: Record<string, string> = {
   DISMISSED: "Đã bỏ qua",
 };
 
+const REPORT_REASONS: Record<string, string> = {
+  spam: 'Tin tuyển dụng spam',
+  misleading: 'Thông tin sai lệch',
+  fraud: 'Lừa đảo',
+  inappropriate: 'Nội dung không phù hợp',
+  harassment: 'Quấy rối',
+  other: 'Lý do khác'
+};
+
 const ViolationReportsTable: React.FC = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,7 +152,9 @@ const ViolationReportsTable: React.FC = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 max-w-[150px] truncate" title={report.reason}>{report.reason}</td>
+                    <td className="py-3 max-w-[150px] truncate" title={report.reason}>
+                      {REPORT_REASONS[report.reason] || report.reason}
+                    </td>
                     <td className="py-3">{new Date(report.createdAt).toLocaleDateString("vi-VN")}</td>
                     <td className="py-3">
                       <span

@@ -22,6 +22,25 @@ export interface SocialLinkResponse {
     url: string;
 }
 
+export interface CandidateEducation {
+    id?: number;
+    schoolName: string;
+    degree?: string;
+    major?: string;
+    startDate?: string;
+    endDate?: string;
+    description?: string;
+}
+
+export interface CandidateExperience {
+    id?: number;
+    companyName: string;
+    position?: string;
+    startDate?: string;
+    endDate?: string;
+    description?: string;
+}
+
 export interface CandidateProfile {
     id: number;
     fullName: string;
@@ -29,8 +48,8 @@ export interface CandidateProfile {
     avatarUrl: string;
     title?: string;
     aboutMe?: string;
-    education?: string;
-    experience?: string;
+    educations?: CandidateEducation[];
+    experiences?: CandidateExperience[];
     address?: string;
     dateOfBirth?: string; // ISO Date string YYYY-MM-DD
     gender: string;
@@ -43,8 +62,8 @@ export interface CandidateProfile {
 export interface CandidateProfileRequest {
     title: string;
     aboutMe: string;
-    education: string;
-    experience: string;
+    educations?: CandidateEducation[];
+    experiences?: CandidateExperience[];
     address: string;
     dateOfBirth: string;
     gender: string;

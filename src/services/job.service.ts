@@ -141,14 +141,14 @@ class JobService extends BaseService {
      * Bookmark a job
      */
     async bookmarkJob(id: string): Promise<BaseResponse<boolean>> {
-        return this.post(`/jobs/${id}/bookmark`, {});
+        return this.post('/favorites', { jobId: Number(id) });
     }
 
     /**
      * Unbookmark a job
      */
     async unbookmarkJob(id: string): Promise<BaseResponse<boolean>> {
-        return this.delete(`/jobs/${id}/bookmark`);
+        return this.delete(`/favorites/${id}`);
     }
 
     /**
@@ -169,7 +169,7 @@ class JobService extends BaseService {
             skills: dto.skills || [],
             keywords: dto.keywords || [],
             locationType: mapToUnion(dto.workMethod, ['onsite', 'remote', 'hybrid'], 'onsite'),
-            jobType: mapToUnion(dto.employmentType, ['full-time', 'part-time', 'contract', 'internship'], 'full-time'),
+            jobType: dto.employmentType ? mapToUnion(dto.employmentType.replace(/_/g, '-'), ['full-time', 'part-time', 'contract', 'internship'], 'full-time') as Job['jobType'] : undefined,
             experienceLevel: mapToUnion(dto.experience, ['entry', 'mid', 'senior', 'lead'], 'entry'),
             experience: dto.experience || 'Không yêu cầu',
             salary: {

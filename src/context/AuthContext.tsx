@@ -7,7 +7,7 @@ import { authService } from '@/services/auth.service';
 import { userService } from '@/services/user.service';
 
 interface AuthContextValue extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<any>;
   register: (data: RegisterData) => Promise<void>;
   socialLogin: (data: { provider: 'google' | 'facebook' | 'github'; token: string }) => Promise<void>;
   logout: () => void;
@@ -71,11 +71,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Polling for PENDING users to auto-update status when approved
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
-    // Only poll if authenticated AND status is PENDING (and not Owner, though Owners usually aren't pending)
+
+    // Only poll if authenticated AND status is PENDING
     if (state.isAuthenticated && state.user?.status === 'PENDING') {
-      intervalId = setInterval(() => {
-        // Silent fetch (don't set loading state globaly to avoid UI flickering)
-        userService.getCurrentUser().then(response => {
+      intervalId = setInterval(async () => {
+        try {
+          const response = await userService.getCurrentUser();
           if (response.success && response.data) {
             // Only update if status changed or data changed significantly
             setState(prev => {
@@ -85,8 +86,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               return prev;
             });
           }
-        }).catch(err => console.error("Polling user status failed", err));
-      }, 3000); // Check every 3 seconds for fast response
+        } catch (err) {
+          console.error("Polling user status failed", err);
+        }
+      }, 3000); // Check every 3 seconds
     }
     return () => clearInterval(intervalId);
   }, [state.isAuthenticated, state.user?.status]);
@@ -100,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Fetch user details immediately after login
         await fetchUser();
+        return response.data;
       } else {
         throw new Error(response.message || 'Login failed');
       }

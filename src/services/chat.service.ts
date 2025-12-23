@@ -15,7 +15,9 @@ export interface CursorPageResponse<T> {
 
 export interface SendMessageRequest {
     content: string;
-    attachments?: string[];
+    attachmentUrl?: string;
+    attachmentType?: 'IMAGE' | 'FILE';
+    fileName?: string;
 }
 
 export interface CreateConversationRequest {
@@ -24,6 +26,8 @@ export interface CreateConversationRequest {
 }
 
 class ChatService extends BaseService {
+    // ... existing methods ...
+
     async getRooms(params?: QueryParams): Promise<BaseResponse<PageResponse<Conversation>>> {
         return this.getPaged<Conversation>('/chat/rooms', params);
     }
@@ -38,11 +42,6 @@ class ChatService extends BaseService {
 
     /**
      * Get messages with cursor-based pagination (Messenger/Telegram style)
-     * 
-     * @param roomId - Chat room ID
-     * @param cursor - ISO timestamp cursor (undefined for initial load)
-     * @param limit - Number of messages to fetch (default 20)
-     * @param direction - "before" for older messages, "after" for newer
      */
     async getMessages(
         roomId: string,
@@ -57,6 +56,7 @@ class ChatService extends BaseService {
         if (cursor) {
             params.append('cursor', cursor);
         }
+        // Ensure this endpoint exists and matches backend
         return this.get<CursorPageResponse<Message>>(
             `/chat/rooms/${roomId}/messages?${params.toString()}`
         );
@@ -90,6 +90,16 @@ class ChatService extends BaseService {
 
     async getUnreadCount(): Promise<BaseResponse<{ count: number }>> {
         return this.get<{ count: number }>('/chat/unread-count');
+    }
+
+    async uploadChatAttachment(file: File): Promise<BaseResponse<string>> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.post<string, FormData>('/chat/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
     }
 }
 

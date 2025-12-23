@@ -60,13 +60,13 @@ axiosClient.interceptors.response.use(
         }
 
         // Return structured error
-        const responseData = error.response.data as any;
+        const responseData = error.response.data as ApiError | unknown;
         const apiError: ApiError = {
-            success: responseData?.success || false,
-            code: responseData?.code || error.response.status,
-            message: responseData?.message || error.message || 'An error occurred',
-            timestamp: responseData?.timestamp || new Date().toISOString(),
-            data: responseData?.data
+            success: (responseData as ApiError)?.success || false,
+            code: (responseData as ApiError)?.code || error.response.status,
+            message: (responseData as ApiError)?.message || error.message || 'An error occurred',
+            timestamp: (responseData as ApiError)?.timestamp || new Date().toISOString(),
+            data: (responseData as ApiError)?.data
         };
 
         return Promise.reject(apiError);

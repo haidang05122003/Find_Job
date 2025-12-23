@@ -51,7 +51,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
         id={id}
         name={name}
         placeholder={placeholder}
-        value={value}
+        value={value === null ? "" : value}
         defaultValue={defaultValue}
         onChange={onChange}
         min={min}

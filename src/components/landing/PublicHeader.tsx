@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import UserDropdown from '../header/UserDropdown';
 import NotificationDropdown from '../header/NotificationDropdown';
 import { Logo } from '../shared/Logo';
+import { ChatIcon } from '../shared/icons';
 
 const PublicHeader: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -72,30 +73,21 @@ const PublicHeader: React.FC = () => {
                   </Link>
                 )}
 
-                {/* Candidate: Show Dashboard link */}
+                {/* Candidate: Show Chat Icon instead of Dashboard text */}
                 {isCandidate && (
                   <Link
-                    href="/dashboard"
-                    className="hidden text-sm font-medium text-gray-700 transition hover:text-brand-500 dark:text-gray-300 md:block"
+                    href="/messages"
+                    className="hidden md:flex items-center justify-center h-11 w-11 text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
+                    title="Tin nhắn"
                   >
-                    Thống kê
+                    <ChatIcon className="h-5 w-5" />
                   </Link>
                 )}
 
                 {/* Notifications */}
                 <NotificationDropdown />
 
-                {/* Bookmarks - Only for candidates */}
-                {isCandidate && (
-                  <Link
-                    href="/dashboard/favorite"
-                    className="hidden rounded-full p-2 text-gray-700 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 md:block"
-                  >
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                    </svg>
-                  </Link>
-                )}
+
 
                 {/* User Avatar */}
                 <div className="hidden md:block">

@@ -3,7 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 
+import { useAuth } from '@/context/AuthContext';
+
 const FeaturesSection: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+
   const features = [
     {
       icon: (
@@ -47,7 +51,7 @@ const FeaturesSection: React.FC = () => {
       title: 'Chat realtime',
       description: 'Chat trực tiếp với nhà tuyển dụng theo thời gian thực',
       color: 'from-orange-500 to-red-500',
-      link: '/messages',
+      link: isAuthenticated ? '/messages' : '/login',
     },
   ];
 

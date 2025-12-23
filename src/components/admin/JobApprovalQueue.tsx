@@ -59,6 +59,28 @@ const JobApprovalQueue: React.FC = () => {
     }
   };
 
+  const handleLock = async (id: string) => {
+    if (!window.confirm("Bạn có chắc chắn muốn ẩn (khóa) bài đăng này?")) return;
+    try {
+      await adminService.lockJob(id);
+      success("Đã khóa bài đăng vi phạm");
+      fetchJobs();
+    } catch (err: any) {
+      error("Không thể khóa bài đăng");
+    }
+  };
+
+  const handleUnlock = async (id: string) => {
+    if (!window.confirm("Bạn có chắc chắn muốn mở khóa (hiển thị lại) bài đăng này?")) return;
+    try {
+      await adminService.unlockJob(id);
+      success("Đã mở khóa bài đăng");
+      fetchJobs();
+    } catch (err: any) {
+      error("Không thể mở khóa bài đăng");
+    }
+  };
+
   const openDetailModal = (job: Job) => {
     setSelectedJob(job);
     setShowModal(true);
@@ -247,12 +269,27 @@ const JobApprovalQueue: React.FC = () => {
                           </button>
                         )}
 
-                        {job.status === 'REJECTED' && (
+                        {(job.status === 'APPROVED' || job.status === 'PENDING') && (
                           <button
-                            onClick={() => handleApprove(job.id, 'APPROVE')}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 transition-colors border border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30 dark:border-emerald-900/30"
+                            onClick={() => handleLock(job.id)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-700 transition-colors border border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:border-gray-700"
+                            title="Ẩn tin (Khóa)"
                           >
-                            Duyệt lại
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                          </button>
+                        )}
+
+                        {(job.status === 'REJECTED' || job.status === 'CLOSED') && (
+                          <button
+                            onClick={() => handleUnlock(job.id)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-colors border border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30 dark:border-blue-900/30"
+                            title="Mở lại (Unlock)"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                            </svg>
                           </button>
                         )}
                       </div>

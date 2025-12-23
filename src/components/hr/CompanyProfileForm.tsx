@@ -25,6 +25,7 @@ const CompanyProfileForm: React.FC = () => {
     logoUrl: "",
     coverImageUrl: "",
     companySize: "",
+    companyCode: "",
   });
 
   // Fetch company data on mount
@@ -43,6 +44,7 @@ const CompanyProfileForm: React.FC = () => {
             logoUrl: response.data.logoUrl || "",
             coverImageUrl: response.data.coverImageUrl || "",
             companySize: response.data.companySize || "",
+            companyCode: response.data.companyCode || "",
           });
         }
       } catch (err) {
@@ -59,6 +61,13 @@ const CompanyProfileForm: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const copyCompanyCode = () => {
+    if (formData.companyCode) {
+      navigator.clipboard.writeText(formData.companyCode);
+      toastSuccess("Đã sao chép mã công ty");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -163,6 +172,37 @@ const CompanyProfileForm: React.FC = () => {
         desc="Cập nhật nội dung giới thiệu và thông tin hiển thị cho ứng viên."
       >
         <form className="space-y-6" onSubmit={handleSubmit}>
+          {/* Company Code Display - Only for Owners */}
+          {user?.isCompanyOwner && (
+            <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-900/30 dark:bg-blue-900/10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                    Mã công ty (Company Code)
+                  </h4>
+                  <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+                    Cung cấp mã này cho thành viên khác để họ tham gia vào công ty của bạn.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="rounded-lg bg-white px-3 py-1.5 font-mono text-sm font-bold tracking-wider text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
+                    {formData.companyCode || "Đang cập nhật..."}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={copyCompanyCode}
+                    className="rounded-lg bg-white p-2 text-gray-500 transition hover:bg-gray-50 hover:text-brand-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                    title="Sao chép"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid gap-5 md:grid-cols-2">
             <label className="space-y-2">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">

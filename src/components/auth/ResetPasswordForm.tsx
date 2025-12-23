@@ -95,9 +95,10 @@ export default function ResetPasswordForm() {
         toastSuccess("Đặt lại mật khẩu thành công! Vui lòng đăng nhập.");
         router.push("/signin");
       }
-    } catch (err: any) {
-      console.error("Reset password error:", err);
-      setError(err.message || "Đặt lại mật khẩu thất bại.");
+    } catch (error: unknown) {
+      console.error("Reset password error:", error);
+      const err = error as { message?: string };
+      toastError(err.message || "Đặt lại mật khẩu thất bại.");
     } finally {
       setIsLoading(false);
     }
@@ -177,8 +178,8 @@ export default function ResetPasswordForm() {
                     onClick={handleResendOtp}
                     disabled={countdown > 0 || isLoading}
                     className={`font-medium transition-colors ${countdown > 0
-                        ? "text-gray-400 cursor-not-allowed"
-                        : "text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-brand-500 hover:text-brand-600 dark:text-brand-400"
                       }`}
                   >
                     {countdown > 0 ? `Request again in ${countdown}s` : "Request again"}

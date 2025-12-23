@@ -29,4 +29,5 @@ export interface Company {
     logoUrl?: string;
     phone?: string;
     address?: string;
+    accountId?: number;
 }

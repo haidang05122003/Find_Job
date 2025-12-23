@@ -67,7 +67,14 @@ const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            // Basic validation (e.g. max 5MB, pdf/doc/docx)
+
+            // Validate file type
+            if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+                toastError("Chỉ chấp nhận định dạng PDF.");
+                return;
+            }
+
+            // Basic validation (e.g. max 5MB)
             if (file.size > 5 * 1024 * 1024) {
                 toastError("File quá lớn. Vui lòng chọn file dưới 5MB.");
                 return;
@@ -193,10 +200,12 @@ const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                             {activeTab === 'upload' ? (
                                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                                     <input
+                                        id="cv-upload"
+                                        name="cv-upload"
                                         type="file"
                                         ref={fileInputRef}
                                         className="hidden"
-                                        accept=".pdf,.doc,.docx"
+                                        accept=".pdf"
                                         onChange={handleFileChange}
                                     />
                                     {selectedFile ? (
@@ -210,7 +219,7 @@ const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                                                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                                             </div>
                                             <p className="text-sm text-gray-600 font-medium">Nhấn để tải lên CV của bạn</p>
-                                            <p className="text-xs text-gray-500 mt-1">Hỗ trợ định dạng .doc, .docx, .pdf có kích thước dưới 5MB</p>
+                                            <p className="text-xs text-gray-500 mt-1">Hỗ trợ định dạng .pdf có kích thước dưới 5MB</p>
                                         </div>
                                     )}
                                 </div>

@@ -148,18 +148,66 @@ const CandidateProfileModal: React.FC<CandidateProfileModalProps> = ({
                                 <div className="h-px bg-gray-100 dark:bg-gray-800" />
 
                                 {/* Experience */}
-                                <div>
-                                    <h4 className="mb-2 text-sm font-semibold uppercase text-gray-900 dark:text-white">Kinh nghiệm làm việc</h4>
-                                    <div
-                                        className="rounded-xl bg-gray-50 p-4 text-sm text-gray-700 dark:bg-gray-800/50 dark:text-gray-300 whitespace-pre-line prose dark:prose-invert max-w-none"
-                                        dangerouslySetInnerHTML={{ __html: profile.experience || "Chưa cập nhật kinh nghiệm." }}
-                                    />
-                                </div>
+                                <h4 className="mb-2 text-sm font-semibold uppercase text-gray-900 dark:text-white">Kinh nghiệm làm việc</h4>
+                                {profile.experiences && profile.experiences.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {profile.experiences.map((exp) => (
+                                            <div key={exp.id} className="rounded-xl bg-gray-50 p-4 dark:bg-gray-800/50">
+                                                <div className="mb-1 flex justify-between items-start">
+                                                    <div>
+                                                        <h5 className="font-bold text-gray-900 dark:text-white">{exp.companyName}</h5>
+                                                        {exp.position && <p className="text-sm font-medium text-brand-600">{exp.position}</p>}
+                                                    </div>
+                                                    {(exp.startDate || exp.endDate) && (
+                                                        <span className="text-xs text-gray-500 bg-white dark:bg-gray-700 px-2 py-1 rounded border border-gray-100 dark:border-gray-600">
+                                                            {exp.startDate ? new Date(exp.startDate).getFullYear() : 'N/A'} - {exp.endDate ? new Date(exp.endDate).getFullYear() : 'Present'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {exp.description && (
+                                                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 whitespace-pre-line">
+                                                        {exp.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic">Chưa cập nhật kinh nghiệm làm việc.</p>
+                                )}
+                                {/* Education */}
+                                {profile?.educations && profile.educations.length > 0 && (
+                                    <div>
+                                        <h4 className="mb-2 text-sm font-semibold uppercase text-gray-900 dark:text-white">Học vấn</h4>
+                                        <div className="space-y-4">
+                                            {profile.educations.map((edu) => (
+                                                <div key={edu.id} className="rounded-xl bg-gray-50 p-4 dark:bg-gray-800/50">
+                                                    <div className="mb-1 flex justify-between items-start">
+                                                        <div>
+                                                            <h5 className="font-bold text-gray-900 dark:text-white">{edu.schoolName}</h5>
+                                                            {edu.major && <p className="text-sm font-medium text-brand-600">{edu.degree ? `${edu.degree} - ` : ''}{edu.major}</p>}
+                                                        </div>
+                                                        {(edu.startDate || edu.endDate) && (
+                                                            <span className="text-xs text-gray-500 bg-white dark:bg-gray-700 px-2 py-1 rounded border border-gray-100 dark:border-gray-600">
+                                                                {edu.startDate ? new Date(edu.startDate).getFullYear() : 'N/A'} - {edu.endDate ? new Date(edu.endDate).getFullYear() : 'Present'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {edu.description && (
+                                                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                                                            {edu.description}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Skills ... */}
                                 <div>
                                     <h4 className="mb-2 text-sm font-semibold uppercase text-gray-900 dark:text-white">Kỹ năng</h4>
-                                    {profile.skills && profile.skills.length > 0 ? (
+                                    {profile?.skills && profile.skills.length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
                                             {profile.skills.map((skill) => (
                                                 <span key={skill.id} className="inline-flex items-center rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
@@ -174,7 +222,7 @@ const CandidateProfileModal: React.FC<CandidateProfileModalProps> = ({
                                 </div>
 
                                 {/* Social Links */}
-                                {profile.socialLinks && profile.socialLinks.length > 0 && (
+                                {profile?.socialLinks && profile.socialLinks.length > 0 && (
                                     <div>
                                         <div className="h-px bg-gray-100 dark:bg-gray-800 my-6" />
                                         <h4 className="mb-2 text-sm font-semibold uppercase text-gray-900 dark:text-white">Mạng xã hội & Liên kết</h4>

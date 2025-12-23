@@ -100,9 +100,10 @@ export interface CompanyProfile {
     email: string;
     phone: string;
     logoUrl: string;
-    coverImageUrl?: string; // Added
+    coverImageUrl?: string;
     companySize?: string;
     status: string;
+    companyCode?: string;
 }
 
 /**

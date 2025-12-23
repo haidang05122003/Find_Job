@@ -11,6 +11,7 @@ import {
   SearchIcon,
   MapPinIcon,
   BookmarkIcon,
+  ChatIcon,
 } from "./icons";
 
 export const AuthedHeader: React.FC = () => {
@@ -58,15 +59,7 @@ export const AuthedHeader: React.FC = () => {
                 Ứng viên
               </Link>
             </li>
-            <li>
-              <Link
-                target="_blank"
-                href="/messages"
-                className="font-medium text-gray-600 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400 transition-colors duration-200"
-              >
-                Chat
-              </Link>
-            </li>
+
             <li>
               <Link
                 href="/dashboard"
@@ -88,6 +81,13 @@ export const AuthedHeader: React.FC = () => {
             className="text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400 transition-colors duration-200"
           >
             <BookmarkIcon className="w-6 h-6" />
+          </Link>
+          <Link
+            href="/messages"
+            className="text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400 transition-colors duration-200 relative"
+          >
+            <ChatIcon className="w-6 h-6" />
+            {/* Optional: Add badge if unread messages exist (logic needed from ChatContext) */}
           </Link>
           <Link href="/jobs/create" className="hidden sm:flex">
             <Button variant="primary">

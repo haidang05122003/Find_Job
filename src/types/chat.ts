@@ -26,13 +26,17 @@ export interface Message {
     status?: MessageStatus;
     type?: MessageType;
     readBy?: string[];
+    attachmentUrl?: string;
+    attachmentType?: 'IMAGE' | 'FILE';
+    fileName?: string;
 }
 
 export interface Conversation {
     id: string;
-    participants: User[];
+    participants?: User[];
     name?: string; // Backend DTO might return pre-resolved name
     avatar?: string; // Backend DTO might return pre-resolved avatar
+    otherUserId?: number;
     lastMessage?: Message | string; // Backend might return string content directly
     lastMessageAt?: Date | string; // Backend specific field
     unreadCount: number;

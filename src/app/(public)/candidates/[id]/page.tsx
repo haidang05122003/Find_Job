@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { candidateService, PublicCandidateResponse } from '@/services/candidate.service';
+import { chatService } from '@/services/chat.service';
 import Button from '@/components/shared/Button';
 import Badge from '@/components/shared/Badge';
 import { useToast } from '@/context/ToastContext';
@@ -97,17 +98,32 @@ export default function CandidateDetailPage() {
                                 <p className="text-sm text-gray-500 mt-1">{candidate.address || 'Chưa cập nhật địa điểm'}</p>
                             </div>
                             <div className="flex gap-3 mt-4 sm:mt-0">
-                                <Button size="sm" variant="outline" className="p-2">
-                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                                    </svg>
-                                </Button>
-                                <Button size="sm" className="gap-2">
-                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                    Liên hệ
-                                </Button>
+                                <div className="flex gap-3 mt-4 sm:mt-0">
+                                    <Button
+                                        size="sm"
+                                        className="gap-2"
+                                        onClick={async () => {
+                                            if (!isAuthenticated) {
+                                                error('Vui lòng đăng nhập để liên hệ');
+                                                return;
+                                            }
+                                            try {
+                                                const res = await chatService.createRoom({ participantId: String(candidate.userId || candidate.id) });
+                                                if (res.success && res.data) {
+                                                    const targetPath = isRecruiter ? '/hr/chat' : '/messages';
+                                                    router.push(`${targetPath}?conversationId=${res.data.id}`);
+                                                }
+                                            } catch (e) {
+                                                error('Không thể tạo cuộc trò chuyện');
+                                            }
+                                        }}
+                                    >
+                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        Liên hệ
+                                    </Button>
+                                </div>
                             </div>
                         </div>
 
@@ -120,8 +136,29 @@ export default function CandidateDetailPage() {
                         {/* 3. Cover Letter (Experience) */}
                         <div className="rounded-2xl bg-white p-8 shadow-sm dark:bg-gray-800">
                             <h3 className="mb-6 text-lg font-bold uppercase tracking-wider text-gray-900 dark:text-white border-b pb-2 dark:border-gray-700">KINH NGHIỆM LÀM VIỆC</h3>
-                            {candidate.experience ? (
-                                <div className="prose max-w-none text-gray-600 dark:text-gray-300 dark:prose-invert" dangerouslySetInnerHTML={{ __html: candidate.experience }} />
+                            {candidate.experiences && candidate.experiences.length > 0 ? (
+                                <div className="space-y-6">
+                                    {candidate.experiences.map((exp) => (
+                                        <div key={exp.id} className="relative pl-6 border-l-2 border-gray-100 dark:border-gray-700 last:border-0">
+                                            <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-brand-100 border-2 border-brand-500 dark:bg-brand-900 dark:border-brand-400"></div>
+                                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-2">
+                                                <h4 className="text-lg font-bold text-gray-900 dark:text-white">{exp.companyName}</h4>
+                                                {(exp.startDate || exp.endDate) && (
+                                                    <span className="text-sm font-mono text-gray-500 dark:text-gray-400">
+                                                        {exp.startDate ? new Date(exp.startDate).toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' }) : 'N/A'} -
+                                                        {exp.endDate ? new Date(exp.endDate).toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' }) : 'Hiện tại'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {exp.position && <p className="text-brand-600 dark:text-brand-400 font-medium mb-2">{exp.position}</p>}
+                                            {exp.description && (
+                                                <div className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-line">
+                                                    {exp.description}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             ) : (
                                 <p className="text-gray-500 italic">Chưa cập nhật kinh nghiệm làm việc.</p>
                             )}
@@ -220,7 +257,20 @@ export default function CandidateDetailPage() {
                                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>
                                         <span className="text-xs font-semibold uppercase">Học vấn</span>
                                     </div>
-                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-200">{candidate.education || 'Chưa cập nhật'}</p>
+                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-200">
+                                        {candidate.educations && candidate.educations.length > 0 ? (
+                                            <ul className="list-disc list-inside space-y-1 mt-1">
+                                                {candidate.educations.map(edu => (
+                                                    <li key={edu.id} className="text-sm">
+                                                        <span className="font-semibold">{edu.schoolName}</span>
+                                                        {edu.major && <span className="block text-xs text-gray-500 pl-4">{edu.degree ? `${edu.degree} - ` : ''}{edu.major}</span>}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <p className="text-gray-500 italic">Chưa cập nhật</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

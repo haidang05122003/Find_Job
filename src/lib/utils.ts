@@ -11,7 +11,7 @@ export function cn(...inputs: (string | undefined | null | false)[]) {
 // ============================================
 // FORMATTERS
 // ============================================
-export function formatSalary(salary: SalaryRange): string {
+export function formatSalary(salary: SalaryRange, options?: { short?: boolean, upTo?: boolean }): string {
   const { min, max, currency } = salary;
 
   const formatNumber = (num: number): string => {
@@ -21,6 +21,11 @@ export function formatSalary(salary: SalaryRange): string {
   };
 
   const currencySymbol = currency === 'VND' ? '₫' : currency === 'USD' ? '$' : currency;
+
+  if (options?.upTo && max > 0) {
+    return `Lên đến ${formatNumber(max)} ${currencySymbol}`;
+  }
+
   if (min === max) return `${formatNumber(min)} ${currencySymbol}`;
   return `${formatNumber(min)} - ${formatNumber(max)} ${currencySymbol}`;
 }
@@ -147,7 +152,16 @@ export function isValidFileType(file: File, allowedTypes: string[]): boolean {
   return allowedTypes.includes(file.type);
 }
 
+
 export function isValidSalaryRange(min: number, max: number): boolean {
   return min >= 0 && max >= min;
 }
 
+export function formatCurrency(amount: number | undefined | null, currency: string = 'VND'): string {
+  if (amount === undefined || amount === null) return '0';
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}

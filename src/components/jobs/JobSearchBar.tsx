@@ -83,6 +83,7 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
   const handleCategorySelect = (groupName: string) => {
     setCategory(groupName);
     setIsCategoryOpen(false);
+    onSearch({ keyword, location, category: groupName });
   };
 
   return (
@@ -100,10 +101,28 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
             <input
               type="text"
               value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setKeyword(val);
+                if (!val) onSearch({ keyword: '', location, category });
+              }}
               placeholder="Tiêu đề, từ khóa..."
-              className="w-full h-14 pl-11 pr-4 bg-transparent text-gray-900 placeholder-gray-500 dark:text-white rounded-t-xl sm:rounded-l-xl sm:rounded-tr-none focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700/50 transition-colors font-inter text-sm"
+              className="w-full h-14 pl-11 pr-10 bg-transparent text-gray-900 placeholder-gray-500 dark:text-white rounded-t-xl sm:rounded-l-xl sm:rounded-tr-none focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700/50 transition-colors font-inter text-sm"
             />
+            {keyword && (
+              <button
+                type="button"
+                onClick={() => {
+                  setKeyword('');
+                  onSearch({ keyword: '', location, category });
+                }}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
 
           {/* Location Input (Typable) */}
@@ -118,10 +137,28 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
               type="text"
               list="search-locations-list"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setLocation(val);
+                if (!val) onSearch({ keyword, location: '', category });
+              }}
               placeholder="Tất cả địa điểm"
-              className="w-full h-14 pl-11 pr-4 bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700/50 transition-colors truncate font-inter text-sm"
+              className="w-full h-14 pl-11 pr-10 bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700/50 transition-colors truncate font-inter text-sm"
             />
+            {location && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLocation('');
+                  onSearch({ keyword, location: '', category });
+                }}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
             <datalist id="search-locations-list">
               {locations.map((loc) => (
                 <option key={loc} value={loc} />

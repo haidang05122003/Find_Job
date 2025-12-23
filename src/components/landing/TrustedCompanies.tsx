@@ -5,14 +5,8 @@ import { motion } from 'framer-motion';
 import { Company } from '@/types/company';
 
 const TrustedCompanies: React.FC<{ companies: Company[] }> = ({ companies }) => {
-    // If no companies are provided, don't render or show loading state? 
-    // For now, let's gracefully handle empty array by mapping whatever is there.
-    // Actually, we should use the duplicated list logic for the marquee.
-
-    // Ensure we have enough items for a smooth marquee even if fetch returns few
     const displayCompanies = companies.length > 0 ? companies : [];
-    // Duplicate at least enough times to fill width. 
-    // If we have 10, 2 repeats is 20, usually enough. 3 is safer.
+  
     const duplicatedCompanies = [...displayCompanies, ...displayCompanies, ...displayCompanies];
 
     if (companies.length === 0) return null;
@@ -27,13 +21,6 @@ const TrustedCompanies: React.FC<{ companies: Company[] }> = ({ companies }) => 
                 <div className="relative flex overflow-hidden mask-linear-gradient">
                     <motion.div
                         className="flex gap-12 sm:gap-24 items-center whitespace-nowrap"
-                        // Actually, for a perfect loop with Framer Motion, it's best to wrap the children.
-                        // Let's use X: "-100%" of the container? No.
-                        // Let's revert to a CSS animation class if Framer Motion is tricky with dynamic width, 
-                        // OR calculate it.
-                        // Let's try x: ["0%", "-33.33%"] since we triplicated the list?
-                        // Yes, if we have 3 sets, scrolling 33.33% effectively scrolls exactly one set, returning to start of second set which looks identical to start of first.
-                        // That is the standard marquee trick.
                         animate={{
                             x: ["0%", "-33.33%"],
                         }}

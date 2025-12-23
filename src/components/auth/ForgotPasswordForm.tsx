@@ -28,9 +28,10 @@ export default function ForgotPasswordForm() {
         // Optional: Redirect or show success message
         router.push(`/reset-password?email=${encodeURIComponent(email)}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Forgot password error:", error);
-      toastError(error.message || "Gửi yêu cầu thất bại. Vui lòng thử lại.");
+      const err = error as { message?: string };
+      toastError(err.message || "Gửi yêu cầu thất bại. Vui lòng thử lại.");
     } finally {
       setIsLoading(false);
     }

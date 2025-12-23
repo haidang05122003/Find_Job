@@ -65,12 +65,10 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
         coverLetter: coverLetter
       });
 
-      // TODO: Show success message (toast)
       success("Ứng tuyển thành công! Nhà tuyển dụng sẽ sớm liên hệ với bạn.");
       onClose();
     } catch (err) {
       console.error(err);
-      // TODO: Show error message
       error("Có lỗi xảy ra, vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);

@@ -10,14 +10,17 @@ import JobApplicationInfo from '@/components/job/JobApplicationInfo';
 import RelatedJobs from '@/components/jobs/RelatedJobs';
 import Button from '@/components/shared/Button';
 import Modal from '@/components/shared/Modal';
-import ReportModal from '@/components/jobs/ReportModal';
+
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { jobService } from '@/services/job.service';
 import { favoriteService } from '@/services/favorite.service';
-import JobApplicationModal from '@/components/jobs/JobApplicationModal';
 import { t } from '@/lib/i18n';
 import Breadcrumb, { getJobDetailBreadcrumbs } from '@/components/shared/Breadcrumb';
+import dynamic from 'next/dynamic';
+
+const JobApplicationModal = dynamic(() => import('@/components/jobs/JobApplicationModal'), { ssr: false });
+const ReportModal = dynamic(() => import('@/components/jobs/ReportModal'), { ssr: false });
 import type { Job } from '@/types/job';
 import type { Company } from '@/types/company';
 

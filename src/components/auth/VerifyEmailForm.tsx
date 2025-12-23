@@ -18,11 +18,11 @@ export default function VerifyEmailForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // TODO: Verify API
+
+    // Mock verification - Pending backend 'verify-email' endpoint implementation
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    
+
     setIsLoading(false);
     router.push("/signin");
   };
@@ -30,14 +30,14 @@ export default function VerifyEmailForm() {
   const handleResend = async () => {
     setIsResending(true);
     setResendSuccess(false);
-    
-    // TODO: Call resend email API
+
+    // Mock resend - Pending backend implementation
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    
+
     setIsResending(false);
     setResendSuccess(true);
-    
+
     // Hide success message after 3 seconds
     setTimeout(() => setResendSuccess(false), 3000);
   };

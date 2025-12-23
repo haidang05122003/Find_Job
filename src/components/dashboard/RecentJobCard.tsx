@@ -14,18 +14,24 @@ interface Job {
   location: string;
   salary: string;
   dateApplied: string;
-  status: "active" | "expired";
+  status: string;
 }
 
 interface RecentJobCardProps {
   job: Job;
 }
 
-export default function RecentJobCard({ job }: RecentJobCardProps) {
+import { memo } from "react";
+
+function RecentJobCard({ job }: RecentJobCardProps) {
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
     <motion.tr
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      variants={itemVariants}
       whileHover={{ backgroundColor: "rgba(249, 250, 251, 0.5)" }}
       transition={{ duration: 0.2 }}
       className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors duration-200"
@@ -55,6 +61,7 @@ export default function RecentJobCard({ job }: RecentJobCardProps) {
                   onError={(e) => {
                     e.currentTarget.src = fallbackSrc;
                   }}
+                  loading="lazy"
                 />
               );
             })()}
@@ -73,15 +80,46 @@ export default function RecentJobCard({ job }: RecentJobCardProps) {
         {job.dateApplied}
       </td>
       <td className="p-4 align-middle">
-        {job.status === "active" ? (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20">
-            Đang tuyển
-          </span>
-        ) : (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-            Hết hạn
-          </span>
-        )}
+        {(() => {
+          const s = job.status?.toLowerCase();
+          if (s === 'pending') {
+            return (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20">
+                Chờ duyệt
+              </span>
+            );
+          } else if (s === 'approved') {
+            return (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 border border-purple-100 dark:border-purple-500/20">
+                Đã duyệt
+              </span>
+            );
+          } else if (s === 'interview') {
+            return (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20">
+                Đang phỏng vấn
+              </span>
+            );
+          } else if (['active', 'hired', 'offered'].includes(s)) {
+            return (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20">
+                {s === 'hired' ? 'Đã trúng tuyển' : s === 'offered' ? 'Đề nghị việc làm' : 'Đang tuyển'}
+              </span>
+            );
+          } else if (s === 'rejected') {
+            return (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 border border-red-100 dark:border-red-500/20">
+                Bị từ chối
+              </span>
+            );
+          } else {
+            return (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                Hết hạn
+              </span>
+            );
+          }
+        })()}
       </td>
       <td className="p-4 align-middle text-right">
         <Link href={`/jobs/${job.id}`}>
@@ -93,3 +131,5 @@ export default function RecentJobCard({ job }: RecentJobCardProps) {
     </motion.tr>
   );
 }
+
+export default memo(RecentJobCard);

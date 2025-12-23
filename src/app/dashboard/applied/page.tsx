@@ -13,52 +13,48 @@ import { applicationService, Application } from "@/services/application.service"
 import { PAGINATION } from "@/lib/constants";
 
 const statusIcon = (status: string) => {
-  const s = status?.toLowerCase();
-  if (s === "offered" || s === "hired") {
-    return <CheckCircleIcon className="w-4 h-4 mr-1 text-green-500" />;
+  const s = status?.toUpperCase();
+  if (s === "PENDING" || s === "APPROVED" || s === "INTERVIEW" || s === "OFFERED" || s === "HIRED") {
+    // Return null or simplified icon as the badge style handles visual weight
+    return null;
   }
-  if (s === "interview" || s === "shortlisted") {
-    return <CheckCircleIcon className="w-4 h-4 mr-1 text-amber-500" />;
-  }
-  if (s === "rejected") {
-    return (
-      <svg className="w-4 h-4 mr-1 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    );
-  }
-  if (s === "withdrawn") {
-    return (
-      <svg className="w-4 h-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-      </svg>
-    );
-  }
-  return <CheckCircleIcon className="w-4 h-4 mr-1 text-blue-500" />;
+  return null;
 };
 
 const statusLabel = (status: string) => {
-  const s = status?.toLowerCase();
+  const s = status?.toUpperCase();
   switch (s) {
-    case "pending": return "Chờ xem xét";
-    case "reviewing": return "Đang xem xét";
-    case "shortlisted": return "Lọt vào danh sách";
-    case "interview": return "Đang phỏng vấn";
-    case "offered": return "Nhận Offer";
-    case "rejected": return "Bị từ chối";
-    case "withdrawn": return "Đã rút";
-    case "hired": return "Được tuyển";
+    case "PENDING": return "Chờ xem xét";
+    case "APPROVED": return "Đã duyệt hồ sơ";
+    case "INTERVIEW": return "Đang phỏng vấn";
+    case "OFFERED": return "Đề nghị tuyển dụng";
+    case "HIRED": return "Đã trúng tuyển";
+    case "REJECTED": return "Bị từ chối";
+    case "WITHDRAWN": return "Đã rút hồ sơ";
     default: return status;
   }
 };
 
 const statusColor = (status: string) => {
-  const s = status?.toLowerCase();
-  if (s === "offered" || s === "hired") return "text-green-600 dark:text-green-400";
-  if (s === "interview" || s === "shortlisted") return "text-amber-600 dark:text-amber-400";
-  if (s === "rejected") return "text-red-600 dark:text-red-400";
-  if (s === "withdrawn") return "text-gray-500 dark:text-gray-400";
-  return "text-blue-600 dark:text-blue-400";
+  const s = status?.toUpperCase();
+  switch (s) {
+    case "PENDING":
+      return "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded-full text-xs font-semibold";
+    case "APPROVED":
+      return "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 px-2 py-1 rounded-full text-xs font-semibold";
+    case "INTERVIEW":
+      return "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full text-xs font-semibold";
+    case "OFFERED":
+      return "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-1 rounded-full text-xs font-semibold";
+    case "HIRED":
+      return "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-1 rounded-full text-xs font-semibold";
+    case "REJECTED":
+      return "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-2 py-1 rounded-full text-xs font-semibold";
+    case "WITHDRAWN":
+      return "text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-500/10 px-2 py-1 rounded-full text-xs font-semibold";
+    default:
+      return "text-gray-600 bg-gray-100 px-2 py-1 rounded-full text-xs font-semibold";
+  }
 };
 
 export default function DashboardAppliedJobsPage() {
@@ -263,7 +259,6 @@ export default function DashboardAppliedJobsPage() {
                             transition={{ delay: 0.4 + index * 0.05 }}
                             className={`flex items-center ${statusColor(app.status)}`}
                           >
-                            {statusIcon(app.status)}
                             {statusLabel(app.status)}
                           </motion.span>
                         </td>

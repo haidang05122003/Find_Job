@@ -64,10 +64,10 @@ export default function UserDropdown() {
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11 border border-gray-200 dark:border-gray-700">
           <Image
             src={avatarSrc}
-            width={44}
-            height={44}
+            width={80}
+            height={80}
             alt={displayName}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </span>
 

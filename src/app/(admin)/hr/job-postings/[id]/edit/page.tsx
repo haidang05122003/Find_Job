@@ -46,7 +46,8 @@ export default function EditJobPage() {
                         deadline: job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : "",
                     });
                 }
-            } catch (err) {
+            } catch (error) {
+                console.error("Failed to fetch job:", error);
                 toastError("Không thể tải thông tin tin tuyển dụng");
                 router.push("/hr/job-postings");
             } finally {

@@ -4,16 +4,22 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Company } from '@/types/company';
 import { Job } from '@/types/job';
 import { companyService } from '@/services/company.service';
 import { jobService } from '@/services/job.service';
+import { chatService } from '@/services/chat.service'; // Import chatService
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import Button from '@/components/shared/Button';
 import CompanyJobCard from '@/components/company/CompanyJobCard';
 
 export default function CompanyDetailPage() {
     const params = useParams();
+    const router = useRouter(); // Init router
+    const { isAuthenticated } = useAuth(); // Init auth
+    const { error: toastError } = useToast(); // Init toast
     const id = params.id as string;
 
     const [company, setCompany] = useState<Company | null>(null);
@@ -174,9 +180,37 @@ export default function CompanyDetailPage() {
                             </div>
                         </div>
 
-                        <button className="bg-white text-gray-800 font-semibold px-6 py-2 rounded shadow hover:bg-gray-50 transition-colors">
-                            Đang theo dõi
-                        </button>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={async () => {
+                                    if (!isAuthenticated) {
+                                        toastError('Vui lòng đăng nhập để nhắn tin');
+                                        return;
+                                    }
+                                    if (!company.accountId) {
+                                        toastError('Không thể liên hệ với nhà tuyển dụng này');
+                                        return;
+                                    }
+                                    try {
+                                        const res = await chatService.createRoom({ participantId: String(company.accountId) });
+                                        if (res.success && res.data) {
+                                            router.push(`/messages?conversationId=${res.data.id}`);
+                                        }
+                                    } catch (e) {
+                                        toastError('Không thể tạo cuộc trò chuyện');
+                                    }
+                                }}
+                                className="bg-[#00854a] hover:bg-[#006f3c] text-white font-semibold px-6 py-2 rounded shadow transition-colors flex items-center gap-2"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                                Nhắn tin
+                            </button>
+                            <button className="bg-white text-gray-800 font-semibold px-6 py-2 rounded shadow hover:bg-gray-50 transition-colors border border-gray-200">
+                                Đang theo dõi
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -204,25 +238,30 @@ export default function CompanyDetailPage() {
 
                         {/* Tuyển dụng (Recruitment) Section */}
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-                            <div className="bg-[#00854a] px-6 py-3">
+                            <div className="bg-[#00854a] px-6 py-3 flex justify-between items-center">
                                 <h2 className="text-white font-bold text-lg">Tuyển dụng</h2>
+                                <span className="bg-white text-[#00854a] px-3 py-1 rounded-full text-xs font-bold">
+                                    {jobs.length} vị trí
+                                </span>
                             </div>
 
                             {/* Search Bar */}
-                            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row gap-4">
+                            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row gap-3">
                                 <div className="flex-1 relative">
                                     <input
                                         type="text"
                                         placeholder="Tên công việc, vị trí ứng tuyển..."
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-green-500 dark:bg-gray-900 dark:border-gray-700"
+                                        className="w-full h-11 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:border-[#00854a] focus:ring-1 focus:ring-[#00854a] dark:bg-gray-900 dark:border-gray-700 transition-colors"
                                         value={searchKeyword}
                                         onChange={(e) => setSearchKeyword(e.target.value)}
                                     />
-                                    <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                    </div>
                                 </div>
                                 <div className="md:w-1/3 relative">
                                     <select
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-green-500 appearance-none bg-white dark:bg-gray-900 dark:border-gray-700"
+                                        className="w-full h-11 pl-10 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:border-[#00854a] focus:ring-1 focus:ring-[#00854a] appearance-none bg-white dark:bg-gray-900 dark:border-gray-700 transition-colors cursor-pointer"
                                         value={locationFilter}
                                         onChange={(e) => setLocationFilter(e.target.value)}
                                     >
@@ -231,14 +270,17 @@ export default function CompanyDetailPage() {
                                         <option value="Hồ Chí Minh">Hồ Chí Minh</option>
                                         <option value="Đà Nẵng">Đà Nẵng</option>
                                     </select>
-                                    <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                    <svg className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                    </div>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                    </div>
                                 </div>
                                 <button
                                     onClick={handleSearch}
-                                    className="bg-[#00b14f] hover:bg-[#009944] text-white px-6 py-2 rounded font-medium flex items-center gap-2"
+                                    className="h-11 bg-[#00854a] hover:bg-[#006a3b] text-white px-6 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors shadow-sm min-w-[120px]"
                                 >
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                     Tìm kiếm
                                 </button>
                             </div>

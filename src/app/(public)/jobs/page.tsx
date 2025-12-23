@@ -8,6 +8,7 @@ import { FilterState } from '@/components/jobs/AdvanceFilter';
 import { useFilters } from '@/context/FilterContext';
 import { useToast } from '@/context/ToastContext';
 import { jobService } from '@/services/job.service';
+import { Dropdown } from '@/components/ui/dropdown/Dropdown';
 
 export default function JobsPage() {
   const { filters: contextFilters, updateFilter, resetFilters, setFilters } = useFilters();
@@ -15,6 +16,8 @@ export default function JobsPage() {
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('latest');
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const [isPageSizeOpen, setIsPageSizeOpen] = useState(false);
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -270,7 +273,7 @@ export default function JobsPage() {
               {/* Dynamic Active Filter Tags */}
               <div className="flex flex-col gap-2 flex-1 min-w-0">
                 <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                  Tìm thấy <span className="text-brand-600 font-bold">{totalElements}</span> việc làm
+                  Tìm thấy <span className="text-brand-600 font-bold">{loading ? '...' : totalElements}</span> việc làm
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   {activeTags.length > 0 ? (
@@ -301,37 +304,87 @@ export default function JobsPage() {
 
               {/* Sort Options */}
               <div className="flex items-center gap-4 flex-shrink-0 ml-auto md:ml-0">
-                <div className="relative">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="appearance-none h-[40px] pl-4 pr-10 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 shadow-sm cursor-pointer hover:border-gray-300 transition-colors"
+                <div className="relative dropdown-toggle">
+                  <button
+                    onClick={() => setIsSortOpen(!isSortOpen)}
+                    className="flex items-center justify-between gap-3 h-[40px] pl-4 pr-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:border-brand-500 hover:text-brand-600 transition-all shadow-sm min-w-[140px]"
                   >
-                    <option value="latest">Mới nhất</option>
-                    <option value="oldest">Cũ nhất</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <span>{sortBy === 'latest' ? 'Mới nhất' : 'Cũ nhất'}</span>
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isSortOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
-                  </div>
+                  </button>
+
+                  <Dropdown
+                    isOpen={isSortOpen}
+                    onClose={() => setIsSortOpen(false)}
+                    className="w-full mt-1 overflow-hidden p-1 min-w-[140px]"
+                  >
+                    <button
+                      onClick={() => { setSortBy('latest'); setIsSortOpen(false); }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${sortBy === 'latest'
+                        ? 'bg-brand-50 text-brand-600 font-medium dark:bg-brand-500/10 dark:text-brand-400'
+                        : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+                        }`}
+                    >
+                      Mới nhất
+                      {sortBy === 'latest' && (
+                        <svg className="w-4 h-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => { setSortBy('oldest'); setIsSortOpen(false); }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${sortBy === 'oldest'
+                        ? 'bg-brand-50 text-brand-600 font-medium dark:bg-brand-500/10 dark:text-brand-400'
+                        : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+                        }`}
+                    >
+                      Cũ nhất
+                      {sortBy === 'oldest' && (
+                        <svg className="w-4 h-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  </Dropdown>
                 </div>
 
-                <div className="relative">
-                  <select
-                    value={pageSize}
-                    onChange={(e) => setPageSize(Number(e.target.value))}
-                    className="appearance-none h-[40px] pl-4 pr-10 rounded-lg border border-brand-500 bg-white text-sm font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand-500 shadow-sm cursor-pointer"
+                <div className="relative dropdown-toggle">
+                  <button
+                    onClick={() => setIsPageSizeOpen(!isPageSizeOpen)}
+                    className="flex items-center justify-between gap-3 h-[40px] pl-4 pr-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:border-brand-500 hover:text-brand-600 transition-all shadow-sm min-w-[140px]"
                   >
-                    <option value={12}>12 tin / trang</option>
-                    <option value={24}>24 tin / trang</option>
-                    <option value={48}>48 tin / trang</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-brand-600">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <span>{pageSize} tin / trang</span>
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isPageSizeOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
-                  </div>
+                  </button>
+
+                  <Dropdown
+                    isOpen={isPageSizeOpen}
+                    onClose={() => setIsPageSizeOpen(false)}
+                    className="w-full mt-1 overflow-hidden p-1 min-w-[140px]"
+                  >
+                    {[12, 24, 48].map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => { setPageSize(size); setIsPageSizeOpen(false); }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${pageSize === size
+                          ? 'bg-brand-50 text-brand-600 font-medium dark:bg-brand-500/10 dark:text-brand-400'
+                          : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+                          }`}
+                      >
+                        {size} tin / trang
+                        {pageSize === size && (
+                          <svg className="w-4 h-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </Dropdown>
                 </div>
 
                 <div className="flex bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1 h-[40px] items-center">

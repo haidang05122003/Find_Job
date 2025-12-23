@@ -4,34 +4,80 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useNotifications } from '@/context/NotificationContext';
 import { formatRelativeTime, getInitials } from '@/lib/utils';
+import { getRecipient } from '@/lib/chat.utils';
 import { chatService } from '@/services/chat.service';
 import type { Conversation } from '@/types/chat';
 import { usePathname } from 'next/navigation';
 
+
 export default function ChatSidebar({ basePath = '/messages' }: { basePath?: string }) {
     const { user } = useAuth();
+    const { notifications } = useNotifications();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const pathname = usePathname();
 
-    useEffect(() => {
-        const fetchRooms = async () => {
-            try {
-                const res = await chatService.getRooms();
-                if (res.success && res.data) {
-                    setConversations(res.data.content || []);
-                }
-            } catch (error) {
-                console.error('Error fetching rooms:', error);
-            } finally {
-                setIsLoading(false);
+    const fetchRooms = async () => {
+        try {
+            const res = await chatService.getRooms();
+            if (res.success && res.data) {
+                setConversations(res.data.content || []);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching rooms:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
         if (user) {
             fetchRooms();
         }
     }, [user]);
+
+    // Subscribe to real-time chat updates
+    useEffect(() => {
+        if (!user) return;
+
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+        // Need to import SockJS and Client or similar if not available globally. 
+        // For now, check if we can reuse NotificationContext socket or create new one.
+        // Creating new one for Sidebar is safer isolated.
+
+        const socket = new (require('sockjs-client'))(`${API_URL.replace('/api/v1', '')}/ws`);
+        const { Client } = require('@stomp/stompjs'); // Dynamic import to avoid SSR issues if any
+
+        const stompClient = new Client({
+            webSocketFactory: () => socket,
+            reconnectDelay: 5000,
+            debug: () => { }, // Quiet debug
+        });
+
+        stompClient.onConnect = () => {
+            stompClient.subscribe(`/topic/user/${user.id}/chat`, () => {
+                fetchRooms(); // Refresh list on any new message
+            });
+        };
+
+        stompClient.activate();
+
+        return () => {
+            stompClient.deactivate();
+        };
+    }, [user]);
+
+    // Refresh rooms when a new chat notification arrives (Fallback)
+    useEffect(() => {
+        if (notifications.length > 0) {
+            const latest = notifications[0];
+            if (latest.title === 'Tin nhắn mới') {
+                fetchRooms();
+            }
+        }
+    }, [notifications]);
 
     // Determine active ID from pathname (e.g. /messages/123)
     const activeConversationId = pathname?.split('/').pop();
@@ -79,21 +125,10 @@ export default function ChatSidebar({ basePath = '/messages' }: { basePath?: str
                     </div>
                 ) : (
                     conversations.map((conversation) => {
-                        let recipient = conversation.participants?.find((p) => p.id !== user.id);
+                        const recipient = getRecipient(conversation, user.id);
 
                         if (!recipient) {
-                            if (conversation.name) {
-                                recipient = {
-                                    id: conversation.id,
-                                    name: conversation.name,
-                                    avatar: conversation.avatar,
-                                    email: '',
-                                    role: 'CANDIDATE',
-                                    status: 'offline'
-                                };
-                            } else {
-                                return null;
-                            }
+                            return null;
                         }
 
                         const lastMessageContent = typeof conversation.lastMessage === 'string'
@@ -118,12 +153,13 @@ export default function ChatSidebar({ basePath = '/messages' }: { basePath?: str
                                     <div className="flex gap-4">
                                         <div className="relative flex-shrink-0">
                                             {recipient.avatar ? (
-                                                <Image
+                                                <img
                                                     src={recipient.avatar}
                                                     alt={recipient.name}
                                                     width={56}
                                                     height={56}
                                                     className="h-14 w-14 rounded-full object-cover ring-2 ring-white dark:ring-gray-900"
+                                                    referrerPolicy="no-referrer"
                                                 />
                                             ) : (
                                                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-100 to-brand-200 text-lg font-bold text-brand-600 dark:from-brand-900 dark:to-brand-800 dark:text-brand-300">
@@ -133,11 +169,7 @@ export default function ChatSidebar({ basePath = '/messages' }: { basePath?: str
                                             {recipient.status === 'online' && (
                                                 <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-[3px] border-white bg-green-500 dark:border-gray-900" />
                                             )}
-                                            {conversation.unreadCount > 0 && (
-                                                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
-                                                    {conversation.unreadCount}
-                                                </span>
-                                            )}
+
                                         </div>
                                         <div className="flex min-w-0 flex-1 flex-col justify-center">
                                             <div className="flex items-center justify-between">
@@ -145,7 +177,7 @@ export default function ChatSidebar({ basePath = '/messages' }: { basePath?: str
                                                     {recipient.name}
                                                 </h3>
                                                 {lastMessageTime && (
-                                                    <span className={`text-[11px] ${conversation.unreadCount > 0 ? 'font-semibold text-brand-600' : 'text-gray-400'}`}>
+                                                    <span className={`ml-2 flex-shrink-0 whitespace-nowrap text-[11px] ${conversation.unreadCount > 0 ? 'font-semibold text-brand-600' : 'text-gray-400'}`}>
                                                         {formatRelativeTime(lastMessageTime)}
                                                     </span>
                                                 )}
@@ -170,6 +202,6 @@ export default function ChatSidebar({ basePath = '/messages' }: { basePath?: str
                     })
                 )}
             </div>
-        </div>
+        </div >
     );
 }

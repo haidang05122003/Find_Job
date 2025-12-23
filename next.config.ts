@@ -24,7 +24,17 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "lh3.googleusercontent.com",
+        hostname: "**.googleusercontent.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "logo-url-placeholder.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "ui-avatars.com",
         pathname: "/**",
       },
     ],
@@ -96,6 +106,7 @@ const nextConfig: NextConfig = {
   // ============================================
   // BUILD OPTIMIZATION
   // ============================================
+  output: "standalone",
   eslint: {
     ignoreDuringBuilds: true,
   },

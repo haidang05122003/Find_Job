@@ -9,7 +9,7 @@ import Button from "@/components/ui/button/Button";
 import { fadeInVariants } from "@/lib/animations";
 import { jobAlertService } from "@/services/job-alert.service";
 import { Job } from "@/types/job";
-import { formatCurrency } from "@/utils/format";
+import { formatCurrency } from "@/lib/utils";
 
 export default function DashboardAlertsPage() {
   const [jobAlerts, setJobAlerts] = useState<Job[]>([]);

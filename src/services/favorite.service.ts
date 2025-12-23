@@ -2,6 +2,29 @@ import { BaseService } from './base.service';
 import type { BaseResponse, PageResponse } from '@/types/api';
 import type { Job } from '@/types/job';
 
+
+interface FavoriteJobDto {
+    id: number;
+    title: string;
+    companyId?: number;
+    companyName: string;
+    companyLogo?: string;
+    location: string;
+    workMethod: string;
+    employmentType: string;
+    experience: string;
+    salaryMin: number;
+    salaryMax: number;
+    description: string;
+    requirements?: string;
+    benefits?: string;
+    categoryName: string;
+    createdAt: string;
+    deadline: string;
+    quantity?: number;
+    gender?: string;
+}
+
 class FavoriteService extends BaseService {
     /**
      * Add to Favorites
@@ -20,36 +43,51 @@ class FavoriteService extends BaseService {
     /**
      * Get Favorites (Paged)
      */
-    async getFavorites(params?: any): Promise<BaseResponse<PageResponse<Job>>> {
-        const response = await this.getPaged<any>('/favorites', params);
+
+    /**
+     * Get Favorites (Paged)
+     */
+    async getFavorites(params?: import('@/types/service').QueryParams): Promise<BaseResponse<PageResponse<Job>>> {
+        const response = await this.getPaged<FavoriteJobDto>('/favorites', params);
         if (response.success && response.data) {
-            response.data.content = response.data.content.map(this.mapToJob);
+            // @ts-ignore - existing code had logical issue, corrected here map
+            const transformedContent = response.data.content.map(this.mapToJob);
+            return {
+                ...response,
+                data: {
+                    ...response.data,
+                    content: transformedContent
+                }
+            };
         }
-        return response;
+        return response as any; // Cast needed if response structure mismatch, but prefer BaseResponse<PageResponse<Job>>
     }
 
-    private mapToJob(item: any): Job {
+    private mapToJob(item: FavoriteJobDto): Job {
+        const jobType = (item.employmentType?.toLowerCase().replace('_', '-') || 'full-time') as Job['jobType'];
+        const experienceLevel = (item.experience?.toLowerCase() || 'entry') as Job['experienceLevel'];
+
         return {
-            id: item.id,
+            id: item.id.toString(),
             title: item.title,
             company: {
-                id: item.companyId || '', // Backend might need to return companyId
+                id: item.companyId ? item.companyId.toString() : '',
                 name: item.companyName,
                 logo: item.companyLogo || '',
             },
             location: item.location,
             locationType: item.workMethod === 'REMOTE' ? 'remote' : item.workMethod === 'HYBRID' ? 'hybrid' : 'onsite',
-            jobType: (item.employmentType?.toLowerCase().replace('_', '-') as any) || 'full-time',
-            experienceLevel: (item.experience?.toLowerCase() as any) || 'entry',
+            jobType: ['full-time', 'part-time', 'contract', 'internship'].includes(jobType) ? jobType : 'full-time',
+            experienceLevel: ['entry', 'mid', 'senior', 'lead'].includes(experienceLevel) ? experienceLevel : 'entry',
             experience: item.experience || '',
             salary: {
                 min: item.salaryMin,
                 max: item.salaryMax,
-                currency: 'VNĐ', // Default or from backend
+                currency: 'VNĐ',
                 period: 'month',
             },
             description: item.description,
-            requirements: item.requirements ? [item.requirements] : [], // Simple mapping
+            requirements: item.requirements ? [item.requirements] : [],
             responsibilities: [],
             benefits: item.benefits ? [item.benefits] : [],
             category: item.categoryName,
@@ -57,7 +95,7 @@ class FavoriteService extends BaseService {
             postedAt: new Date(item.createdAt),
             expiresAt: new Date(item.deadline),
             isFeatured: false,
-            isBookmarked: true, // Always true for favorites
+            isBookmarked: true,
             applicantsCount: 0,
             quantity: item.quantity || 1,
             gender: item.gender || 'Any',

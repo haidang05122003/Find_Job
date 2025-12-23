@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatCurrency } from "@/lib/utils";
 
 export interface FilterState {
     jobTypes: string[];
@@ -86,10 +87,7 @@ const AdvanceFilter: React.FC<AdvanceFilterProps> = ({
         });
     };
 
-    const formatCurrency = (value: number) => {
-        if (!value) return '';
-        return new Intl.NumberFormat('vi-VN').format(value);
-    };
+
 
     const handleApply = () => {
         onFilterChange(localFilters);

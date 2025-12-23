@@ -107,11 +107,7 @@ const UserManagementTable: React.FC = () => {
             <option value="BANNED">Đã khóa</option>
           </select>
         </div>
-        <div className="flex gap-3">
-          <button className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:text-gray-300">
-            Xuất CSV
-          </button>
-        </div>
+
       </div>
 
       <div className="overflow-x-auto mb-4">

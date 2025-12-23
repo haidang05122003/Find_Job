@@ -43,46 +43,30 @@ const RecruitmentStatistics: React.FC<RecruitmentStatisticsProps> = ({ data }) =
 
   if (!stats) return null;
 
-  // --- Calculations ---
-
-  // 1. Candidates per Job
-  // Avoid division by zero
   const candidatesPerJob = stats.totalJobs > 0
     ? Math.round(stats.totalApplications / stats.totalJobs)
     : 0;
 
-  // 2. Offer Acceptance Rate (Estimated)
-  // Formula: Hired / (Hired + Offered but not yet hired + Rejected after offer?) 
-  // Simplified: Hired / (Hired + Offered)  <-- This is tricky if 'Offered' implies 'Pending Offer'
-  // Based on available fields: 
-  // 'offeredApplications' = current status is OFFERED.
-  // 'hiredCount' = current status is HIRED.
-  // Total offers made = offeredApplications + hiredCount (assuming hired came from offered)
   const totalOffersMade = stats.offeredApplications + stats.hiredCount;
   const offerAcceptanceRate = totalOffersMade > 0
     ? Math.round((stats.hiredCount / totalOffersMade) * 100)
     : 0;
 
-  // 3. Funnel Construction
-  // Stage 1: Applied (Total)
-  // Stage 2: Screened (Anyone who passed initial review) -> Approved + Interview + Offered + Hired
   const screenedCount = stats.approvedApplications + stats.interviewScheduled + stats.offeredApplications + stats.hiredCount;
 
-  // Stage 3: Interview (Interview + Offered + Hired)
+
   const interviewCount = stats.interviewScheduled + stats.offeredApplications + stats.hiredCount;
 
-  // Stage 4: Offer (Offered + Hired)
+
   const offerCount = stats.offeredApplications + stats.hiredCount;
 
-  // Stage 5: Hired
+
   const hiredCount = stats.hiredCount;
 
   const funnel = [
     { stage: "Ứng tuyển", value: stats.totalApplications, percent: 100 },
     { stage: "Sàng lọc", value: screenedCount, percent: stats.totalApplications > 0 ? (screenedCount / stats.totalApplications) * 100 : 0 },
     { stage: "Phỏng vấn", value: interviewCount, percent: stats.totalApplications > 0 ? (interviewCount / stats.totalApplications) * 100 : 0 },
-    { stage: "Offer", value: offerCount, percent: stats.totalApplications > 0 ? (offerCount / stats.totalApplications) * 100 : 0 },
-    { stage: "Tuyển dụng", value: hiredCount, percent: stats.totalApplications > 0 ? (hiredCount / stats.totalApplications) * 100 : 0 },
   ];
 
   const metrics = [
@@ -98,12 +82,6 @@ const RecruitmentStatistics: React.FC<RecruitmentStatisticsProps> = ({ data }) =
       detail: "Nguồn chính",
       trend: "",
     },
-    {
-      label: "Tỉ lệ nhận offer",
-      value: `${offerAcceptanceRate}%`,
-      detail: `${stats.hiredCount} đã tuyển / ${totalOffersMade} offer`,
-      trend: "",
-    },
   ];
 
   return (
@@ -113,7 +91,7 @@ const RecruitmentStatistics: React.FC<RecruitmentStatisticsProps> = ({ data }) =
         desc="KPI tuyển dụng tổng quan của doanh nghiệp."
         className="xl:col-span-2"
       >
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2">
           {metrics.map((metric) => (
             <div
               key={metric.label}

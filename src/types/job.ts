@@ -19,7 +19,7 @@ export interface Job {
     skills?: string[];
     keywords?: string[];
     locationType: 'onsite' | 'remote' | 'hybrid';
-    jobType: 'full-time' | 'part-time' | 'contract' | 'internship';
+    jobType?: 'full-time' | 'part-time' | 'contract' | 'internship';
     experienceLevel: 'entry' | 'mid' | 'senior' | 'lead';
     experience?: string;
     level?: string;

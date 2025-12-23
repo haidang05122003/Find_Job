@@ -45,12 +45,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwn, avatarUrl, se
       {!isOwn && (
         <div className="flex-shrink-0 mb-1">
           {avatarUrl ? (
-            <Image
+            <img
               src={avatarUrl}
               alt={senderName || 'Avatar'}
-              width={28}
-              height={28}
-              className="rounded-full object-cover"
+              className="w-7 h-7 rounded-full object-cover"
             />
           ) : (
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-600 dark:bg-brand-500/20 dark:text-brand-400">
@@ -66,7 +64,42 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwn, avatarUrl, se
           : 'bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100 rounded-bl-sm border border-gray-100 dark:border-gray-700'
           }`}
       >
-        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        <div className="space-y-2">
+          {message.attachmentUrl && message.attachmentType === 'IMAGE' && (
+            <div className="mb-2">
+              <img
+                src={message.attachmentUrl}
+                alt="Attachment"
+                className="rounded-lg max-w-full h-auto object-cover max-h-[300px]"
+                loading="lazy"
+              />
+            </div>
+          )}
+
+          {message.attachmentUrl && message.attachmentType === 'FILE' && (
+            <a
+              href={message.attachmentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center gap-2 p-3 rounded-lg border ${isOwn
+                ? 'bg-blue-700 border-blue-600 hover:bg-blue-800'
+                : 'bg-gray-50 border-gray-200 hover:bg-gray-100 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600'
+                } transition-colors`}
+            >
+              <div className={`p-2 rounded-full ${isOwn ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'}`}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div className="flex flex-col overflow-hidden">
+                <span className="font-medium truncate text-xs">{message.fileName || 'Tệp đính kèm'}</span>
+                <span className="text-[10px] opacity-75">Nhấn để tải về</span>
+              </div>
+            </a>
+          )}
+
+          {message.content && <p className="whitespace-pre-wrap break-words">{message.content}</p>}
+        </div>
         <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${isOwn ? 'text-blue-100' : 'text-gray-400'}`}>
           <span>{formatTime(message.timestamp)}</span>
           {isOwn && getStatusIcon()}

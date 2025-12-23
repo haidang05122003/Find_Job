@@ -30,59 +30,59 @@ export default function SignInForm() {
 
     try {
       // Use AuthContext login instead of direct service call
-      // This ensures global auth state is updated before redirecting
-      await login({ username: email, password });
-
-      // Token is handled by login(), retrieve it or just access user info from context if needed (but state update is async)
-      // We can assume login success if no error thrown
+      const loginData = await login({ username: email, password });
 
       toastSuccess(t('auth.signInSuccess') || "Đăng nhập thành công");
 
-      // Verify token to Determine redirection
-      try {
-        const response = await authService.verifyToken();
-        if (response.data) {
-          const roles = response.data.roles || [];
-          const userRole = roles.length > 0 ? roles[0] : (response.data.role || 'CANDIDATE');
+      // Use the returned loginData for redirection logic
+      if (loginData) {
+        const roles = loginData.roles || [];
+        // Determine role (handle different backend response structures if needed)
+        // Adjusting logic based on AuthResponse interface which has roles: string[]
+        const userRole = roles.length > 0 ? roles[0] : 'CANDIDATE';
 
-          if (userRole === 'ADMIN' || userRole === 'ROLE_ADMIN') {
-            router.push("/admin");
-          } else if (userRole === 'HR' || userRole === 'ROLE_HR') {
-            try {
-              const companyRes = await import("@/services/hr.service").then(m => m.hrService.getMyCompany());
-              if (companyRes.data) {
-                if (companyRes.data.status === 'PENDING' || companyRes.data.status === 'REJECTED') {
-                  router.push("/hr/company-status");
-                } else {
-                  router.push("/hr");
-                }
+        if (userRole === 'ADMIN' || userRole === 'ROLE_ADMIN') {
+          router.push("/admin");
+        } else if (userRole === 'HR' || userRole === 'ROLE_HR') {
+          // For HR, we might still need to check company status, but we can do that slightly later or assume dashboard
+          // Ideally backend login response should have company status if crucial
+          // For now, redirect to HR dashboard, AuthGuard will handle specifics or we fetch company status separate
+          // Optimization: Just go to HR dashboard. If specialized logic needed, keep it but simpler.
+
+          // If we really need company status, we fetch it. But let's try to trust the router/guards more.
+          // Or just keep the detailed logic but ONLY for HR.
+          try {
+            const companyRes = await import("@/services/hr.service").then(m => m.hrService.getMyCompany());
+            if (companyRes.data) {
+              if (companyRes.data.status === 'PENDING' || companyRes.data.status === 'REJECTED') {
+                router.push("/hr/company-status");
               } else {
-                router.push("/hr/setup-company");
+                router.push("/hr");
               }
-            } catch (err) {
-              router.push("/hr/setup-company"); // Default to setup if getMyCompany fails (e.g. no company)
+            } else {
+              router.push("/hr/setup-company");
             }
-          } else {
-            router.push("/");
+          } catch (err) {
+            router.push("/hr/setup-company");
           }
         } else {
           router.push("/");
         }
-      } catch (verifyError) {
-        console.error("Auto-redirect failed, falling back to home:", verifyError);
+      } else {
+        // Fallback if no data (shouldn't happen with updated context)
         router.push("/");
       }
 
+      // DO NOT set isLoading(false) here, so button stays disabled during redirect
     } catch (error: any) {
-      console.error("Login error object:", JSON.stringify(error, null, 2));
+      console.error("Login failed:", error.message || error);
       let message = t('auth.signInFailed') || "Đăng nhập thất bại";
 
       if (error?.message) message = error.message;
       if (error?.response?.data?.message) message = error.response.data.message;
 
       toastError(message);
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Only re-enable button on error
     }
   };
 
@@ -97,9 +97,10 @@ export default function SignInForm() {
 
         toastSuccess(t('auth.signInSuccess') || "Đăng nhập thành công");
         router.push("/");
-      } catch (error: any) {
-        console.error("Google login error:", error);
-        toastError(error.message || "Đăng nhập Google thất bại");
+      } catch (error: unknown) {
+        console.error("Login error:", error);
+        const err = error as { message?: string };
+        toastError(err.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
       } finally {
         setIsLoading(false);
       }
@@ -151,7 +152,7 @@ export default function SignInForm() {
                   type="email"
                   id="email-login"
                   name="email"
-                  defaultValue={email}
+                  value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="mt-1.5"
@@ -167,7 +168,7 @@ export default function SignInForm() {
                     placeholder={t('auth.passwordPlaceholder')}
                     id="password-login"
                     name="password"
-                    defaultValue={password}
+                    value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />

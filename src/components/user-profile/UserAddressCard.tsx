@@ -46,6 +46,7 @@ export default function UserAddressCard() {
       } else {
         toastError(response.message || "Cập nhật thất bại");
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toastError("Đã xảy ra lỗi khi lưu địa chỉ");
     } finally {

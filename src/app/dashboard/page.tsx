@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import PageTransition from "@/components/shared/PageTransition";
@@ -9,33 +9,21 @@ import ProfileCompletionBanner from "@/components/dashboard/ProfileCompletionBan
 import RecentJobCard from "@/components/dashboard/RecentJobCard";
 import { BriefcaseIcon, BookmarkIcon, BellIcon } from "@/components/shared/icons";
 import { containerVariants, fadeInVariants } from "@/lib/animations";
-import { candidateService, CandidateDashboardResponse } from "@/services/candidate.service";
+
 import { useAuth } from "@/context/AuthContext";
+
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 
 export default function DashboardOverviewPage() {
   const { user } = useAuth();
-  const [stats, setStats] = useState<CandidateDashboardResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchDashboardStats = async () => {
-      try {
-        const response = await candidateService.getDashboardStats();
-        if (response.success && response.data) {
-          setStats(response.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard stats", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDashboardStats();
-  }, []);
+  const { data: stats, isLoading, error } = useDashboardStats();
 
   if (isLoading) {
     return <div className="p-6 text-center">Đang tải dữ liệu...</div>;
+  }
+
+  if (error) {
+    return <div className="p-6 text-center text-red-500">Có lỗi xảy ra khi tải dữ liệu.</div>;
   }
 
   return (
@@ -134,7 +122,18 @@ export default function DashboardOverviewPage() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                  <motion.tbody
+                    className="divide-y divide-gray-50 dark:divide-gray-800"
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                      visible: {
+                        transition: {
+                          staggerChildren: 0.1
+                        }
+                      }
+                    }}
+                  >
                     {stats.recentApplications.map((app) => (
                       <RecentJobCard key={app.id} job={{
                         id: app.id.toString(),
@@ -144,10 +143,10 @@ export default function DashboardOverviewPage() {
                         location: app.location,
                         salary: app.salary,
                         dateApplied: app.appliedAt,
-                        status: app.status.toLowerCase() as any // Map backend status if needed
+                        status: app.status.toLowerCase() as any
                       }} />
                     ))}
-                  </tbody>
+                  </motion.tbody>
                 </table>
               ) : (
                 <div className="text-center py-6 text-gray-500">Chưa có ứng tuyển nào gần đây</div>

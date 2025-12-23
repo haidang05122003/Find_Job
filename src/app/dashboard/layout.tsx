@@ -10,6 +10,7 @@ import { ChatProvider } from "@/context/ChatContext";
 import PublicHeader from "@/components/landing/PublicHeader";
 import Footer from "@/components/landing/Footer";
 import ChatWidget from "@/components/shared/ChatWidget";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 import CandidateSidebar from "@/components/dashboard/CandidateSidebar";
 
@@ -23,31 +24,33 @@ export default function DashboardLayout({
       <ToastProvider>
         <ChatProvider>
           <FilterProvider>
-            <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
-              {/* Header */}
-              <PublicHeader />
+            <AuthGuard>
+              <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
+                {/* Header */}
+                <PublicHeader />
 
-              {/* Main Content with Sidebar */}
-              <div className="flex-1">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-                  <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Sidebar */}
-                    <aside className="lg:w-64 flex-shrink-0">
-                      <CandidateSidebar />
-                    </aside>
+                {/* Main Content with Sidebar */}
+                <div className="flex-1">
+                  <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="flex flex-col lg:flex-row gap-8">
+                      {/* Sidebar */}
+                      <aside className="lg:w-64 flex-shrink-0">
+                        <CandidateSidebar />
+                      </aside>
 
-                    {/* Main Content */}
-                    <main className="flex-1 min-w-0">
-                      {children}
-                    </main>
+                      {/* Main Content */}
+                      <main className="flex-1 min-w-0">
+                        {children}
+                      </main>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Footer */}
-              <Footer />
-              <ChatWidget />
-            </div>
+                {/* Footer */}
+                <Footer />
+                <ChatWidget />
+              </div>
+            </AuthGuard>
           </FilterProvider>
         </ChatProvider>
       </ToastProvider>

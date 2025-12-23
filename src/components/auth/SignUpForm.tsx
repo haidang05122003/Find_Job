@@ -109,8 +109,9 @@ export default function SignUpForm() {
         toastSuccess("Đăng ký thành công! Vui lòng đăng nhập.");
         router.push("/signin");
       }
-    } catch (err: any) {
-      console.error("Register error:", err);
+    } catch (error: unknown) {
+      console.error("Register error:", error);
+      const err = error as { message?: string };
       const message = err.message || "Đăng ký thất bại. Vui lòng thử lại.";
       setError(message);
       toastError(message);

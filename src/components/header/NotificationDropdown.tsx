@@ -9,13 +9,14 @@ import { useNotifications } from "@/context/NotificationContext";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, unreadCount, markAsRead, fetchNotifications } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, fetchNotifications } = useNotifications();
 
   function toggleDropdown() {
-    setIsOpen(!isOpen);
     if (!isOpen) {
-      // Optionally refresh on open, though socket handles real-time
+      setIsOpen(true);
       fetchNotifications();
+    } else {
+      setIsOpen(false);
     }
   }
 
@@ -127,12 +128,20 @@ export default function NotificationDropdown() {
             </li>
           )}
         </ul>
-        <Link
-          href="/notifications"
-          className="block px-4 py-2 mt-3 text-sm font-medium text-center text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+        <button
+          onClick={() => {
+            markAllAsRead();
+            closeDropdown();
+          }}
+          disabled={unreadCount === 0}
+          className={`block w-full px-4 py-2 mt-3 text-sm font-medium text-center border rounded-lg transition-colors
+            ${unreadCount === 0
+              ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
+              : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+            }`}
         >
-          Xem tất cả
-        </Link>
+          Đánh dấu đã đọc
+        </button>
       </Dropdown>
     </div>
   );

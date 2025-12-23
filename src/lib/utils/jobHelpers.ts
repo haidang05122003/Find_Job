@@ -21,14 +21,26 @@ export const getTimeAgo = (date: Date): string => {
     return `${Math.floor(days / 30)} tháng trước`;
 };
 
-export const formatSalary = (salary: Job['salary']): string => {
+import { formatCurrency } from '@/lib/utils';
+
+export const formatSalary = (salary: Job['salary'], options?: { short?: boolean, upTo?: boolean }): string => {
     const { min, max, period } = salary;
-    const periodText = period === 'month' ? '/tháng' : period === 'year' ? '/năm' : '/giờ';
+    // const periodText = period === 'month' ? '/tháng' : period === 'year' ? '/năm' : '/giờ';
+
+    // If 'upTo' mode is requested (Lên đến X)
+    if (options?.upTo) {
+        if (max && max > 0) {
+            return `Lên đến ${formatCurrency(max)}`;
+        }
+    }
+
+    const periodText = period === 'month' ? '' : period === 'year' ? '/năm' : '/giờ';
 
     if (min === max) {
-        return `${min.toLocaleString()}${periodText}`;
+        return `${formatCurrency(min)}${period === 'month' ? '' : periodText}`;
     }
-    return `${min.toLocaleString()} - ${max.toLocaleString()}${periodText}`;
+
+    return `${formatCurrency(min)} - ${formatCurrency(max)}`;
 };
 
 export const getLocationTypeColor = (locationType: Job['locationType']): 'success' | 'info' | 'neutral' => {
@@ -83,7 +95,11 @@ export const filterJobsBySearch = (jobs: Job[], query?: string): Job[] => {
     );
 };
 
-export const getJobTypeLabel = (jobType: string): string => {
+export const getJobTypeLabel = (jobType?: string): string | null => {
+    if (!jobType) return null;
+
+    const normalizedType = jobType.toLowerCase().replace('-', '_');
+
     const map: Record<string, string> = {
         'full_time': 'Toàn thời gian',
         'part_time': 'Bán thời gian',
@@ -92,8 +108,9 @@ export const getJobTypeLabel = (jobType: string): string => {
         'remote': 'Làm từ xa',
         'temporary': 'Tạm thời',
         'freelance': 'Tự do',
-        'full-time': 'Toàn thời gian',
-        'part-time': 'Bán thời gian',
+        'full_time_permanent': 'Toàn thời gian',
+        'part_time_permanent': 'Bán thời gian',
     };
-    return map[jobType] || jobType?.replace(/_/g, ' ') || 'Toàn thời gian';
+
+    return map[normalizedType] || jobType.replace(/_/g, ' ');
 };

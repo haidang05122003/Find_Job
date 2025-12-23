@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Job } from '@/types/job';
-import { useToast } from '@/context/ToastContext';
+
 import { formatSalary } from '@/lib/utils/jobHelpers';
 import Button from '@/components/shared/Button';
 
@@ -19,13 +19,8 @@ const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({
   onSave,
   isSaved,
 }) => {
-  const { success } = useToast();
-  const [saved, setSaved] = useState(isSaved);
-
   const handleSave = () => {
-    setSaved(!saved);
     onSave();
-    success(saved ? 'Đã bỏ lưu công việc' : 'Đã lưu công việc');
   };
 
   const daysLeft = Math.ceil((new Date(job.expiresAt).getTime() - new Date().getTime()) / (1000 * 3600 * 24));
@@ -111,15 +106,15 @@ const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({
           </Button>
           <button
             onClick={handleSave}
-            className={`px-4 py-2.5 rounded border font-medium transition-colors flex items-center gap-2 ${saved
+            className={`px-4 py-2.5 rounded border font-medium transition-colors flex items-center gap-2 ${isSaved
               ? 'border-brand-500 text-brand-500 bg-brand-50'
               : 'border-brand-500 text-brand-500 hover:bg-brand-50 bg-white'
               }`}
           >
-            <svg className="w-5 h-5" fill={saved ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5" fill={isSaved ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
-            {saved ? 'Đã lưu' : 'Lưu tin'}
+            {isSaved ? 'Đã lưu' : 'Lưu tin'}
           </button>
         </div>
       </div>

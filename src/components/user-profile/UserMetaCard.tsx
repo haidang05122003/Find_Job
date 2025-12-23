@@ -67,6 +67,7 @@ export default function UserMetaCard() {
                 height={80}
                 src={user?.avatarUrl || "/images/user/owner.jpg"}
                 alt="user"
+                className="object-cover w-full h-full"
               />
             </div>
             <div className="order-3 xl:order-2">

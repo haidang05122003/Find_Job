@@ -7,91 +7,69 @@ import Label from "@/components/form/Label";
 import { candidateService } from "@/services/candidate.service";
 import { useToast } from "@/context/ToastContext";
 import { Skill } from "@/types/candidate";
-import { TrashIcon, PlusIcon } from "@/components/shared/icons";
-import RichTextEditor from "@/components/ui/editor/RichTextEditor";
+import { TrashIcon, PlusIcon, EditIcon } from "@/components/shared/icons";
+
+
+import { EducationModal } from "@/components/dashboard/profile/EducationModal";
+import { ExperienceModal } from "@/components/dashboard/profile/ExperienceModal";
+import { CandidateEducation, CandidateExperience } from "@/types/candidate";
+
+// ... inside ProfileSettingsPage ...
 
 export default function ProfileSettingsPage() {
   const { error: toastError, success: toastSuccess } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const [formData, setFormData] = useState({
+  // Consolidated state for simpler management
+  const [profileData, setProfileData] = useState({
+    title: "",
+    aboutMe: "",
+    address: "",
+    phone: "",
     dateOfBirth: "",
     gender: "male",
-    experience: "", // Previously biography, now mapped to experience
   });
 
   const [skills, setSkills] = useState<Skill[]>([]);
   const [newSkill, setNewSkill] = useState({ name: "", level: "Intermediate" });
 
-  const [fullProfile, setFullProfile] = useState<{
-    title?: string;
-    aboutMe?: string;
-    education?: string;
-    address?: string;
-    phone?: string;
-  }>({});
+  const [educations, setEducations] = useState<CandidateEducation[]>([]);
+  const [experiences, setExperiences] = useState<CandidateExperience[]>([]);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  const [isEduModalOpen, setIsEduModalOpen] = useState(false);
+  const [editingEdu, setEditingEdu] = useState<CandidateEducation | null>(null);
 
+  const [isExpModalOpen, setIsExpModalOpen] = useState(false);
+  const [editingExp, setEditingExp] = useState<CandidateExperience | null>(null);
+
+  // Load effect updates
   const loadProfile = async () => {
     try {
       const response = await candidateService.getProfile();
       if (response.success && response.data) {
         const data = response.data;
-
-        // Helper to handle existing plain text content
-        const processContent = (content: string) => {
-          if (!content) return "";
-          // If it looks like HTML, keep it. Otherwise convert newlines to <br/>
-          if (/<[a-z][\s\S]*>/i.test(content)) return content;
-          return content.replace(/\n/g, '<br/>');
-        };
-
-        setFormData({
-          dateOfBirth: data.dateOfBirth || "",
-          gender: data.gender || "male",
-          experience: processContent(data.experience || ""),
-        });
-        setSkills(data.skills || []);
-        setFullProfile({
+        setProfileData({
           title: data.title || "",
           aboutMe: data.aboutMe || "",
-          education: data.education || "",
           address: data.address || "",
           phone: data.phone || "",
+          dateOfBirth: data.dateOfBirth || "",
+          gender: data.gender || "male",
         });
+        setSkills(data.skills || []);
+        setEducations(data.educations || []);
+        setExperiences(data.experiences || []);
       }
     } catch (error) {
       console.error("Load profile error", error);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      // Update Basic Info with all required fields
-      await candidateService.updateProfile({
-        title: fullProfile.title || "",
-        aboutMe: fullProfile.aboutMe || "",
-        education: fullProfile.education || "",
-        address: fullProfile.address || "",
-        phone: fullProfile.phone || "",
-        dateOfBirth: formData.dateOfBirth,
-        gender: formData.gender,
-        experience: formData.experience,
-        skills: skills,
-      });
+  useEffect(() => {
+    loadProfile();
+  }, []);
 
-      toastSuccess("Đã lưu hồ sơ thành công!");
-    } catch (error: any) {
-      toastError(error.message || "Lưu thất bại");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
 
   const handleAddSkill = () => {
     if (!newSkill.name.trim()) return;
@@ -109,42 +87,49 @@ export default function ProfileSettingsPage() {
     setSkills(newSkills);
   };
 
+  const handleSaveEdu = (edu: CandidateEducation) => {
+    if (edu.id) {
+      setEducations(educations.map(e => e.id === edu.id ? edu : e));
+    } else {
+      setEducations([...educations, { ...edu, id: Date.now() }]);
+    }
+  };
+
+  const handleSaveExp = (exp: CandidateExperience) => {
+    if (exp.id) {
+      setExperiences(experiences.map(e => e.id === exp.id ? exp : e));
+    } else {
+      setExperiences([...experiences, { ...exp, id: Date.now() }]);
+    }
+  };
+
+  // Submit handler updates
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      await candidateService.updateProfile({
+        ...profileData,
+        skills: skills,
+        educations: educations,
+        experiences: experiences,
+      });
+      toastSuccess("Đã lưu hồ sơ thành công!");
+    } catch (error: any) {
+      toastError(error.message || "Lưu thất bại");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-6">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90 mb-6">
-        Thông tin hồ sơ
+        Kinh nghiệm & Kỹ năng
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Personal Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label>Ngày sinh</Label>
-            <Input
-              type="date"
-              value={formData.dateOfBirth}
-              onChange={(e) =>
-                setFormData({ ...formData, dateOfBirth: e.target.value })
-              }
-              max={new Date().toISOString().split("T")[0]}
-            />
-          </div>
-
-          <div>
-            <Label>Giới tính</Label>
-            <select
-              value={formData.gender}
-              onChange={(e) =>
-                setFormData({ ...formData, gender: e.target.value })
-              }
-              className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white transition-all duration-200"
-            >
-              <option value="male">Nam</option>
-              <option value="female">Nữ</option>
-              <option value="other">Khác</option>
-            </select>
-          </div>
-        </div>
+        {/* Basic Info Module Removed - Handled in Main Settings Page */}
 
         {/* Skills Section - Replacing Marital Status */}
         <div>
@@ -200,24 +185,100 @@ export default function ProfileSettingsPage() {
           </div>
         </div>
 
-        {/* Experience - Renamed from Biography */}
+        {/* Education List Section */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <Label>Học vấn</Label>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingEdu(null);
+                setIsEduModalOpen(true);
+              }}
+              className="text-sm text-brand-500 hover:text-brand-600 font-medium"
+            >
+              + Thêm
+            </button>
+          </div>
+          <div className="space-y-3">
+            {educations.map((edu, index) => (
+              <div key={edu.id || index} className="p-3 border rounded-lg bg-gray-50 dark:bg-gray-800/50 flex justify-between items-start group">
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-white">{edu.schoolName}</p>
+                  <p className="text-sm text-gray-500">{edu.degree} - {edu.major}</p>
+                  {(edu.startDate || edu.endDate) && <p className="text-xs text-gray-400">{edu.startDate} - {edu.endDate}</p>}
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingEdu(edu);
+                      setIsEduModalOpen(true);
+                    }}
+                    className="text-gray-400 hover:text-brand-500 p-1"
+                  >
+                    <EditIcon className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEducations(educations.filter((_, i) => i !== index))}
+                    className="text-gray-400 hover:text-red-500 p-1"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            {educations.length === 0 && <p className="text-sm text-gray-400 italic">Chưa có thông tin học vấn.</p>}
+          </div>
+        </div>
+
+        {/* Experience List Section */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <Label>Kinh nghiệm làm việc</Label>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {formData.experience.length} ký tự
-            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingExp(null);
+                setIsExpModalOpen(true);
+              }}
+              className="text-sm text-brand-500 hover:text-brand-600 font-medium"
+            >
+              + Thêm
+            </button>
           </div>
-
-          <RichTextEditor
-            content={formData.experience}
-            onChange={(html) => setFormData({ ...formData, experience: html })}
-            placeholder="Mô tả chi tiết kinh nghiệm làm việc của bạn..."
-            className="min-h-[300px]"
-          />
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Hãy liệt kê các dự án, công nghệ và thành tựu bạn đã đạt được.
-          </p>
+          <div className="space-y-3">
+            {experiences.map((exp, index) => (
+              <div key={exp.id || index} className="p-3 border rounded-lg bg-gray-50 dark:bg-gray-800/50 flex justify-between items-start group">
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-white">{exp.companyName}</p>
+                  <p className="text-sm text-brand-600">{exp.position}</p>
+                  {(exp.startDate || exp.endDate) && <p className="text-xs text-gray-400">{exp.startDate} - {exp.endDate}</p>}
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingExp(exp);
+                      setIsExpModalOpen(true);
+                    }}
+                    className="text-gray-400 hover:text-brand-500 p-1"
+                  >
+                    <EditIcon className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExperiences(experiences.filter((_, i) => i !== index))}
+                    className="text-gray-400 hover:text-red-500 p-1"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            {experiences.length === 0 && <p className="text-sm text-gray-400 italic">Chưa có kinh nghiệm làm việc.</p>}
+          </div>
         </div>
 
         {/* Submit Button */}
@@ -227,6 +288,19 @@ export default function ProfileSettingsPage() {
           </Button>
         </div>
       </form >
+
+      <EducationModal
+        isOpen={isEduModalOpen}
+        onClose={() => setIsEduModalOpen(false)}
+        onSubmit={handleSaveEdu}
+        initialData={editingEdu}
+      />
+      <ExperienceModal
+        isOpen={isExpModalOpen}
+        onClose={() => setIsExpModalOpen(false)}
+        onSubmit={handleSaveExp}
+        initialData={editingExp}
+      />
     </div >
   );
 }

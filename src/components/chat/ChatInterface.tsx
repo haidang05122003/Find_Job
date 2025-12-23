@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import { getInitials } from '@/lib/utils';
-import { chatService, CursorPageResponse } from '@/services/chat.service';
-import { webSocketService } from '@/services/websocket.service';
-import type { Message, Conversation } from '@/types/chat';
+import { getRecipient } from '@/lib/chat.utils';
+import { chatService } from '@/services/chat.service';
+import type { Conversation } from '@/types/chat';
+import { useChatMessages } from '@/hooks/useChatMessages';
+import { useChatScroll } from '@/hooks/useChatScroll';
 
 interface ChatInterfaceProps {
   conversationId: string;
@@ -16,21 +18,28 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, currentUserId, conversation: propConversation }) => {
-  const [messages, setMessages] = React.useState<Message[]>([]);
-  const [localConversation, setLocalConversation] = React.useState<Conversation | null>(null);
-  const [isConnected, setIsConnected] = React.useState(false);
+  const [localConversation, setLocalConversation] = useState<Conversation | null>(null);
 
-  // Cursor-based pagination state
-  const [nextCursor, setNextCursor] = React.useState<string | null>(null);
-  const [hasMore, setHasMore] = React.useState(true);
-  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
+  // Custom hooks
+  const {
+    messages,
+    messagesLoading,
+    hasMore,
+    isLoadingMore,
+    isConnected,
+    loadOlderMessages,
+    sendMessage
+  } = useChatMessages(conversationId);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const {
+    messagesContainerRef,
+    messagesEndRef,
+    handleScroll
+  } = useChatScroll(messages.length, isLoadingMore);
 
   const conversation = propConversation || localConversation;
 
-  // Fetch conversation metadata
+  // Fetch conversation metadata (keep existing logic)
   useEffect(() => {
     const fetchConv = async () => {
       if (!propConversation && conversationId) {
@@ -53,134 +62,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, currentUs
     fetchConv();
   }, [conversationId, propConversation]);
 
-  // Initial message load with cursor-based pagination
-  useEffect(() => {
-    const fetchMessages = async () => {
-      if (!conversationId) return;
-
-      try {
-        // Initial load: get newest 20 messages (cursor = undefined)
-        const res = await chatService.getMessages(conversationId);
-        if (res.success && res.data) {
-          const normalizedMessages = res.data.content.map((msg: Message) => ({
-            ...msg,
-            conversationId: msg.conversationId || String(msg.roomId) || conversationId,
-            status: msg.status || 'sent',
-            type: msg.type || 'text',
-          }));
-          setMessages(normalizedMessages);
-          setNextCursor(res.data.nextCursor || null);
-          setHasMore(res.data.hasMore);
-        }
-      } catch (e) {
-        console.error("Error fetching messages", e);
-      }
-    };
-
-    fetchMessages();
-  }, [conversationId]);
-
-  // Load older messages (scroll up)
-  const loadOlderMessages = useCallback(async () => {
-    if (!hasMore || isLoadingMore || !nextCursor) return;
-
-    setIsLoadingMore(true);
-    try {
-      const res = await chatService.getMessages(conversationId, nextCursor, 20, 'before');
-      if (res.success && res.data) {
-        const normalizedMessages = res.data.content.map((msg: Message) => ({
-          ...msg,
-          conversationId: msg.conversationId || String(msg.roomId) || conversationId,
-          status: msg.status || 'sent',
-          type: msg.type || 'text',
-        }));
-
-        // Prepend older messages
-        setMessages(prev => [...normalizedMessages, ...prev]);
-        setNextCursor(res.data.nextCursor || null);
-        setHasMore(res.data.hasMore);
-      }
-    } catch (e) {
-      console.error("Error loading older messages", e);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [conversationId, hasMore, isLoadingMore, nextCursor]);
-
-  // Scroll detection for infinite scroll (load more when at top)
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const container = e.currentTarget;
-    // Load more when scrolled to top (within 50px threshold)
-    if (container.scrollTop < 50 && hasMore && !isLoadingMore) {
-      loadOlderMessages();
-    }
-  }, [hasMore, isLoadingMore, loadOlderMessages]);
-
-  // WebSocket subscription
-  useEffect(() => {
-    if (!conversationId) return;
-
-    const setupWebSocket = async () => {
-      await webSocketService.connect();
-      setIsConnected(true);
-
-      webSocketService.subscribe(`/topic/chat/${conversationId}`, (rawMessage: Message) => {
-        const newMessage: Message = {
-          ...rawMessage,
-          conversationId: rawMessage.conversationId || String(rawMessage.roomId) || conversationId,
-          status: rawMessage.status || 'sent',
-          type: rawMessage.type || 'text',
-        };
-
-        setMessages((prev) => {
-          if (prev.some(m => String(m.id) === String(newMessage.id))) return prev;
-          return [...prev, newMessage];
-        });
-      });
-    };
-
-    setupWebSocket();
-
-    return () => {
-      webSocketService.unsubscribe(`/topic/chat/${conversationId}`);
-    };
-  }, [conversationId]);
-
-  // Scroll to bottom on new messages (only for new messages at end)
-  useEffect(() => {
-    if (messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages.length]);
-
-  const handleSend = async (content: string) => {
-    try {
-      const res = await chatService.sendMessage(conversationId, { content });
-      if (res.success && res.data) {
-        setMessages((prev) => {
-          if (prev.some(m => String(m.id) === String(res.data.id))) return prev;
-          return [...prev, res.data];
-        });
-      }
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    }
-  };
-
   // UI Helpers
-  let recipient = conversation?.participants?.find((p) => p.id !== currentUserId);
-  if (!recipient && conversation && conversation.name) {
-    recipient = {
-      id: conversation.id,
-      name: conversation.name,
-      avatar: conversation.avatar,
-      email: '',
-      role: 'CANDIDATE',
-      status: 'offline'
-    };
-  }
+  const recipient = conversation && currentUserId ? getRecipient(conversation, currentUserId) : undefined;
 
-  if (!conversation) {
+  // Handle loading initial conversation metadata
+  if (!conversation && !localConversation) {
     return (
       <div className="flex h-full items-center justify-center">
         <p className="text-gray-500 dark:text-gray-400">Loading conversation...</p>
@@ -202,12 +88,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, currentUs
       <div className="flex items-center gap-3 border-b border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="relative">
           {recipient.avatar ? (
-            <Image
+            /* Use standard img tag to avoid Next.js Image Optimization issues with external Google URLs */
+            <img
               src={recipient.avatar}
               alt={recipient.name}
-              width={40}
-              height={40}
               className="h-10 w-10 rounded-full object-cover"
+              referrerPolicy="no-referrer"
             />
           ) : (
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-600 dark:bg-brand-500/20 dark:text-brand-400">
@@ -233,7 +119,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, currentUs
       <div
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto bg-gray-50/50 p-6 dark:bg-gray-950"
-        onScroll={handleScroll}
+        onScroll={() => handleScroll()}
       >
         {/* Loading indicator for older messages */}
         {isLoadingMore && (
@@ -254,7 +140,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, currentUs
           </div>
         )}
 
-        {messages.length === 0 ? (
+        {messages.length === 0 && !messagesLoading ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
               <p className="text-gray-500 dark:text-gray-400">
@@ -285,7 +171,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId, currentUs
       </div>
 
       {/* Input Area */}
-      <ChatInput onSend={handleSend} onTyping={() => { }} disabled={!isConnected && false} />
+      <ChatInput onSend={(text, attach) => sendMessage(text, attach)} onTyping={() => { }} disabled={!isConnected && false} />
     </div>
   );
 };

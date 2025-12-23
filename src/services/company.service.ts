@@ -35,10 +35,10 @@ class CompanyService extends BaseService {
                     ...response.data,
                     content: transformedContent
                 }
-            };
+            } as BaseResponse<PageResponse<Company>>;
         }
 
-        return response as any;
+        return { ...response, data: { ...response.data, content: [] } } as BaseResponse<PageResponse<Company>>;
     }
 
     /**
@@ -54,7 +54,7 @@ class CompanyService extends BaseService {
             };
         }
 
-        return response as any;
+        return response as unknown as BaseResponse<Company>;
     }
 
     private transformToCompany(dto: CompanyResponse): Company {
@@ -65,6 +65,7 @@ class CompanyService extends BaseService {
             description: dto.description || '',
             industry: dto.industry || 'Đa ngành nghề',
             location: dto.address || '',
+            address: dto.address || '',
             companySize: dto.companySize || 'Chưa cập nhật',
             website: dto.website || '',
             openPositions: dto.openPositions || 0,

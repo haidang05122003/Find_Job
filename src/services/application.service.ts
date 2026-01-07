@@ -25,6 +25,7 @@ export interface Application {
     companyLogo?: string;
     recruiterId?: string; // HR ID for chatting
     candidateId: string;
+    candidateProfileId?: string; // New field for profile ID
     candidateName: string;
     candidateEmail: string;
     status: ApplicationStatus;

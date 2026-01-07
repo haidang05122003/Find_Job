@@ -9,6 +9,7 @@ import ProfileCompletionBanner from "@/components/dashboard/ProfileCompletionBan
 import RecentJobCard from "@/components/dashboard/RecentJobCard";
 import { BriefcaseIcon, BookmarkIcon, BellIcon } from "@/components/shared/icons";
 import { containerVariants, fadeInVariants } from "@/lib/animations";
+import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -19,7 +20,7 @@ export default function DashboardOverviewPage() {
   const { data: stats, isLoading, error } = useDashboardStats();
 
   if (isLoading) {
-    return <div className="p-6 text-center">Đang tải dữ liệu...</div>;
+    return <DashboardSkeleton />;
   }
 
   if (error) {
@@ -101,57 +102,39 @@ export default function DashboardOverviewPage() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.3 }}
-            className="bg-white dark:bg-gray-900 rounded-lg shadow-theme-sm border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-theme-md transition-shadow duration-300"
           >
-            <div className="overflow-x-auto">
-              {stats?.recentApplications && stats.recentApplications.length > 0 ? (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-800">
-                      <th className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Công việc
-                      </th>
-                      <th className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Ngày ứng tuyển
-                      </th>
-                      <th className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Trạng thái
-                      </th>
-                      <th className="p-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Hành động
-                      </th>
-                    </tr>
-                  </thead>
-                  <motion.tbody
-                    className="divide-y divide-gray-50 dark:divide-gray-800"
-                    initial="hidden"
-                    animate="visible"
-                    variants={{
-                      visible: {
-                        transition: {
-                          staggerChildren: 0.1
-                        }
-                      }
-                    }}
-                  >
-                    {stats.recentApplications.map((app) => (
-                      <RecentJobCard key={app.id} job={{
-                        id: app.id.toString(),
-                        title: app.jobTitle,
-                        company: app.companyName,
-                        logo: app.companyLogo,
-                        location: app.location,
-                        salary: app.salary,
-                        dateApplied: app.appliedAt,
-                        status: app.status.toLowerCase() as any
-                      }} />
-                    ))}
-                  </motion.tbody>
-                </table>
-              ) : (
-                <div className="text-center py-6 text-gray-500">Chưa có ứng tuyển nào gần đây</div>
-              )}
-            </div>
+            {stats?.recentApplications && stats.recentApplications.length > 0 ? (
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: {
+                    transition: {
+                      staggerChildren: 0.1
+                    }
+                  }
+                }}
+                className="grid gap-2"
+              >
+                {stats.recentApplications.map((app) => (
+                  <RecentJobCard key={app.id} job={{
+                    id: app.id.toString(),
+                    title: app.jobTitle,
+                    company: app.companyName,
+                    logo: app.companyLogo,
+                    location: app.location,
+                    salary: app.salary,
+                    dateApplied: app.appliedAt,
+                    status: app.status.toLowerCase() as any
+                  }} />
+                ))}
+              </motion.div>
+            ) : (
+              <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-800">
+                <p className="text-gray-500">Chưa có ứng tuyển nào gần đây</p>
+                <Link href="/jobs" className="text-brand-600 font-medium text-sm mt-2 inline-block">Tìm việc ngay</Link>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       </motion.div>

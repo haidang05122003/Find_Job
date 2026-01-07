@@ -2,6 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/components/shared/Button';
+import { BookmarkIcon } from "@/icons";
 import { Job } from '@/types/job';
 import { formatSalary, getTimeAgo } from '@/lib/utils/jobHelpers';
 
@@ -84,9 +85,7 @@ const CompanyJobCard: React.FC<CompanyJobCardProps> = ({ job, onApply, onBookmar
                     className="p-2 border border-brand-200 rounded text-brand-600 hover:bg-brand-50 transition-colors"
                     onClick={() => onBookmark?.(job.id)}
                 >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
+                    <BookmarkIcon className={`w-5 h-5 ${job.isBookmarked ? 'fill-current' : ''}`} />
                 </button>
             </div>
         </div>

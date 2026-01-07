@@ -30,105 +30,94 @@ function RecentJobCard({ job }: RecentJobCardProps) {
   };
 
   return (
-    <motion.tr
+    <motion.div
       variants={itemVariants}
-      whileHover={{ backgroundColor: "rgba(249, 250, 251, 0.5)" }}
-      transition={{ duration: 0.2 }}
-      className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors duration-200"
+      className="group flex items-center gap-4 p-4 mb-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-brand-500/20 hover:shadow-md transition-all duration-200"
     >
-      <td className="p-4 align-middle">
-        <div className="flex items-center space-x-4">
-          <motion.div whileHover={{ scale: 1.05 }} className="w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 bg-white p-1">
-            {(() => {
-              const getImageUrl = (path: string | undefined | null) => {
-                if (!path) return null;
-                if (path.startsWith('http') || path.startsWith('data:')) return path;
-
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
-                const baseUrl = apiUrl.replace(/\/api\/v1\/?$/, '');
-
-                return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
-              };
-
-              const logoSrc = getImageUrl(job.logo);
-              const fallbackSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(job.company)}&background=random&color=fff&size=128`;
-
-              return (
-                <img
-                  src={logoSrc || fallbackSrc}
-                  alt={`${job.company} Logo`}
-                  className="w-full h-full object-contain rounded-lg"
-                  onError={(e) => {
-                    e.currentTarget.src = fallbackSrc;
-                  }}
-                  loading="lazy"
-                />
-              );
-            })()}
-          </motion.div>
-          <div>
-            <p className="font-semibold text-gray-900 dark:text-white line-clamp-1 group-hover:text-brand-600 transition-colors">
-              {job.title}
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
-              {job.company} • <span className="text-brand-500/80">{job.salary}</span>
-            </p>
-          </div>
+      {/* Logo */}
+      <div className="shrink-0">
+        <div className="w-12 h-12 rounded-lg border border-gray-100 dark:border-gray-800 bg-white p-1 flex items-center justify-center overflow-hidden">
+          {(() => {
+            const getImageUrl = (path: string | undefined | null) => {
+              if (!path) return null;
+              if (path.startsWith('http') || path.startsWith('data:')) return path;
+              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+              const baseUrl = apiUrl.replace(/\/api\/v1\/?$/, '');
+              return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+            };
+            const logoSrc = getImageUrl(job.logo);
+            const fallbackSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(job.company)}&background=random&color=fff&size=128`;
+            return (
+              <img
+                src={logoSrc || fallbackSrc}
+                alt={`${job.company} Logo`}
+                className="w-full h-full object-contain rounded-md"
+                onError={(e) => { e.currentTarget.src = fallbackSrc; }}
+                loading="lazy"
+              />
+            );
+          })()}
         </div>
-      </td>
-      <td className="p-4 align-middle text-sm text-gray-600 dark:text-gray-400 font-medium">
-        {job.dateApplied}
-      </td>
-      <td className="p-4 align-middle">
-        {(() => {
-          const s = job.status?.toLowerCase();
-          if (s === 'pending') {
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <Link href={`/jobs/${job.id}`} className="font-bold text-gray-900 dark:text-white truncate hover:text-brand-600 transition-colors">
+            {job.title}
+          </Link>
+          <span className="text-xs text-gray-400 font-medium whitespace-nowrap ml-2">
+            {(() => {
+              if (!job.dateApplied) return "";
+              try {
+                const d = new Date(job.dateApplied);
+                // Check if date is valid
+                if (isNaN(d.getTime())) return job.dateApplied;
+                return d.toLocaleDateString("vi-VN");
+              } catch (e) {
+                return "";
+              }
+            })()}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-500 dark:text-gray-400 truncate pr-2">
+            {job.company}
+          </p>
+
+          {/* Status Badge */}
+          {(() => {
+            const s = job.status?.toLowerCase();
+            let badgeClass = "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400";
+            let label = "Hết hạn";
+
+            if (s === 'pending') {
+              badgeClass = "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800";
+              label = "Chờ duyệt";
+            } else if (s === 'approved') {
+              badgeClass = "bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800";
+              label = "Đã duyệt";
+            } else if (s === 'interview') {
+              badgeClass = "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800";
+              label = "Phỏng vấn";
+            } else if (['active', 'hired', 'offered'].includes(s)) {
+              badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800";
+              label = s === 'hired' ? 'Đã trúng tuyển' : s === 'offered' ? 'Offer' : 'Đang tuyển';
+            } else if (s === 'rejected') {
+              badgeClass = "bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800";
+              label = "Đã từ chối";
+            }
+
             return (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20">
-                Chờ duyệt
+              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-transparent ${badgeClass}`}>
+                {label}
               </span>
             );
-          } else if (s === 'approved') {
-            return (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 border border-purple-100 dark:border-purple-500/20">
-                Đã duyệt
-              </span>
-            );
-          } else if (s === 'interview') {
-            return (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20">
-                Đang phỏng vấn
-              </span>
-            );
-          } else if (['active', 'hired', 'offered'].includes(s)) {
-            return (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20">
-                {s === 'hired' ? 'Đã trúng tuyển' : s === 'offered' ? 'Đề nghị việc làm' : 'Đang tuyển'}
-              </span>
-            );
-          } else if (s === 'rejected') {
-            return (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 border border-red-100 dark:border-red-500/20">
-                Bị từ chối
-              </span>
-            );
-          } else {
-            return (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                Hết hạn
-              </span>
-            );
-          }
-        })()}
-      </td>
-      <td className="p-4 align-middle text-right">
-        <Link href={`/jobs/${job.id}`}>
-          <Button variant="ghost" size="sm" className="text-xs hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-900/20">
-            Chi tiết
-          </Button>
-        </Link>
-      </td>
-    </motion.tr>
+          })()}
+        </div>
+      </div>
+    </motion.div >
   );
 }
 

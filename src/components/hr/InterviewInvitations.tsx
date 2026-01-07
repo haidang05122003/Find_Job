@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import ComponentCard from "../common/ComponentCard";
 import RichTextEditor from "../ui/editor/RichTextEditor";
+import { render } from "@react-email/render";
+import { InterviewInvitation } from "../../../emails/InterviewInvitation";
 import { hrService } from "@/services/hr.service";
 import { applicationService, Application } from "@/services/application.service";
 import { useToast } from "@/context/ToastContext";
@@ -15,6 +17,8 @@ interface InterviewApplication {
   candidateName: string;
   candidateEmail: string;
   jobTitle: string;
+  companyName: string;
+  companyLogo?: string; // Added field
   appliedAt: string;
   status: string;
 }
@@ -46,6 +50,13 @@ interface JobGroup {
   candidates: InterviewApplication[];
 }
 
+// Email Variables
+const EMAIL_VARIABLES = [
+  { label: "Tên ứng viên", value: "{{candidateName}}" },
+  { label: "Vị trí ứng tuyển", value: "{{jobTitle}}" },
+  { label: "Tên công ty", value: "{{companyName}}" },
+];
+
 const StatusBadge = ({ status }: { status: string }) => (
   <span
     className={`rounded-full px-3 py-1 text-xs font-medium ${status === "Đã gửi"
@@ -56,6 +67,28 @@ const StatusBadge = ({ status }: { status: string }) => (
     {status}
   </span>
 );
+
+// Helper to construct full image URL
+// Helper to construct full image URL
+const getLogoUrl = (path?: string) => {
+  if (!path) return undefined;
+  if (path.startsWith("http")) return path;
+
+  // Clean path
+  let cleanPath = path.startsWith("/") ? path.slice(1) : path;
+
+  // Ensure uploads/ prefix if not present (heuristic for this project)
+  // This handles keys like "uuid.png" stored without directory
+  if (!cleanPath.startsWith("uploads/")) {
+    cleanPath = `uploads/${cleanPath}`;
+  }
+
+  // Get base URL (fallback to localhost:8080 for dev)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+  const baseUrl = apiUrl.replace(/\/api\/v1\/?$/, "");
+
+  return `${baseUrl}/${cleanPath}`;
+};
 
 const InterviewInvitations: React.FC = () => {
   const [jobGroups, setJobGroups] = useState<JobGroup[]>([]);
@@ -112,6 +145,8 @@ const InterviewInvitations: React.FC = () => {
                   candidateName: app.candidateName,
                   candidateEmail: app.candidateEmail || "N/A",
                   jobTitle: app.jobTitle,
+                  companyName: app.companyName || "Your Company",
+                  companyLogo: getLogoUrl(app.companyLogo),
                   appliedAt: app.appliedAt,
                   status: "Chưa gửi",
                 });
@@ -133,6 +168,8 @@ const InterviewInvitations: React.FC = () => {
                   candidateName: app.candidateName,
                   candidateEmail: app.candidateEmail || "N/A",
                   jobTitle: app.jobTitle,
+                  companyName: app.companyName || "Your Company",
+                  companyLogo: getLogoUrl(app.companyLogo),
                   appliedAt: app.appliedAt,
                   status: "Đã gửi",
                 });
@@ -190,8 +227,7 @@ const InterviewInvitations: React.FC = () => {
 
     // Pre-fill template
     let content = defaultTemplate;
-    content = content.replace("{{candidateName}}", invite.candidateName);
-    content = content.replace("{{jobTitle}}", invite.jobTitle);
+    // We keep placeholders in the editor content, they will be replaced on send
     setEmailContent(content.replace(/\n/g, '<br/>'));
 
     setIsModalOpen(true);
@@ -201,9 +237,22 @@ const InterviewInvitations: React.FC = () => {
     if (!selectedInvite) return;
     setSending(true);
     try {
+      let processedHmtl = emailContent;
+      processedHmtl = processedHmtl.replace(/{{candidateName}}/g, selectedInvite.candidateName);
+      processedHmtl = processedHmtl.replace(/{{jobTitle}}/g, selectedInvite.jobTitle);
+      processedHmtl = processedHmtl.replace(/{{companyName}}/g, selectedInvite.companyName);
+
+      const emailHtml = await render(
+        <InterviewInvitation
+          companyName={selectedInvite.companyName}
+          companyLogo={selectedInvite.companyLogo}
+          hrMessage={processedHmtl}
+        />
+      );
+
       const response = await applicationService.inviteInterview(selectedInvite.id, {
         subject: emailSubject,
-        customEmailContent: emailContent,
+        customEmailContent: emailHtml,
         body: { // Fallback/Dummy body to satisfy type
           interview_details: { time: "", location: "", format: "onsite" }
         }
@@ -372,6 +421,7 @@ const InterviewInvitations: React.FC = () => {
                       onChange={setEmailContent}
                       placeholder="Nội dung thư mời..."
                       className="min-h-[300px]"
+                      variables={EMAIL_VARIABLES}
                     />
                     <div className="text-xs text-gray-500">Mẹo: Hãy thay thế [thời gian] và [địa điểm] bằng thông tin thực tế.</div>
                   </div>

@@ -3,24 +3,17 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
+import { useRouter } from "next/navigation"; // Added
 import PageTransition from "@/components/shared/PageTransition";
 import Button from "@/components/ui/button/Button";
-import { CheckCircleIcon } from "@/components/shared/icons";
 import Pagination from "@/components/shared/Pagination";
 import { fadeInVariants } from "@/lib/animations";
 import { applicationService, Application } from "@/services/application.service";
+import { chatService } from "@/services/chat.service"; // Added
 import { PAGINATION } from "@/lib/constants";
+import { useToast } from "@/context/ToastContext"; // Added
 
-const statusIcon = (status: string) => {
-  const s = status?.toUpperCase();
-  if (s === "PENDING" || s === "APPROVED" || s === "INTERVIEW" || s === "OFFERED" || s === "HIRED") {
-    // Return null or simplified icon as the badge style handles visual weight
-    return null;
-  }
-  return null;
-};
-
+// ... keep helper functions like statusIcon if needed, but we might not use them all ...
 const statusLabel = (status: string) => {
   const s = status?.toUpperCase();
   switch (s) {
@@ -32,28 +25,6 @@ const statusLabel = (status: string) => {
     case "REJECTED": return "Bị từ chối";
     case "WITHDRAWN": return "Đã rút hồ sơ";
     default: return status;
-  }
-};
-
-const statusColor = (status: string) => {
-  const s = status?.toUpperCase();
-  switch (s) {
-    case "PENDING":
-      return "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded-full text-xs font-semibold";
-    case "APPROVED":
-      return "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 px-2 py-1 rounded-full text-xs font-semibold";
-    case "INTERVIEW":
-      return "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full text-xs font-semibold";
-    case "OFFERED":
-      return "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-1 rounded-full text-xs font-semibold";
-    case "HIRED":
-      return "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-1 rounded-full text-xs font-semibold";
-    case "REJECTED":
-      return "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-2 py-1 rounded-full text-xs font-semibold";
-    case "WITHDRAWN":
-      return "text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-500/10 px-2 py-1 rounded-full text-xs font-semibold";
-    default:
-      return "text-gray-600 bg-gray-100 px-2 py-1 rounded-full text-xs font-semibold";
   }
 };
 
@@ -72,12 +43,16 @@ export default function DashboardAppliedJobsPage() {
     totalElements: 0,
   });
 
+  const { error: toastError } = useToast(); // Added
+  const router = useRouter(); // Added
+
   const fetchApplications = useCallback(async (pageIndex = 0) => {
     setLoading(true);
     try {
       const response = await applicationService.getHistory({
-        page: pageIndex,
+        page: pageIndex, // corrected to page (backend likely uses 'page')
         size: PAGINATION.DEFAULT_PAGE_SIZE,
+        sort: 'createdAt,desc' // Sort by newest
       });
       if (response.success && response.data) {
         setApplications(response.data.content);
@@ -100,38 +75,34 @@ export default function DashboardAppliedJobsPage() {
   }, [fetchApplications]);
 
   const handlePageChange = (page: number) => {
-    // Pagination component uses 1-indexed, API uses 0-indexed
     fetchApplications(page - 1);
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const handleStartChat = async (application: Application) => {
+    if (!application.recruiterId) {
+      toastError('Không thể liên hệ với nhà tuyển dụng này (Chưa thiết lập tin nhắn)');
+      return;
+    }
+
+    try {
+      const res = await chatService.createRoom({ participantId: application.recruiterId });
+      if (res.success && res.data) {
+        router.push(`/messages/${res.data.id}`);
+      } else {
+        toastError('Không thể tạo cuộc trò chuyện');
+      }
+    } catch (error) {
+      toastError('Lỗi kết nối');
+    }
   };
+
 
   return (
     <PageTransition>
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={fadeInVariants}
-        className="space-y-6"
-      >
-        <motion.h2
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="text-xl font-semibold text-gray-900 dark:text-white/90 mb-6"
-        >
-          Việc đã ứng tuyển {pagination.totalElements > 0 && `(${pagination.totalElements})`}
-        </motion.h2>
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold uppercase tracking-wide text-gray-900 dark:text-white/90 mb-6">
+          TIN TUYỂN DỤNG ĐÃ ỨNG TUYỂN
+        </h2>
 
         {loading ? (
           <div className="flex justify-center items-center py-12">
@@ -144,13 +115,11 @@ export default function DashboardAppliedJobsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white dark:bg-gray-900 rounded-lg shadow-theme-sm border border-gray-200 dark:border-gray-800 p-12 text-center"
           >
+            {/* ... preserve empty state ... */}
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Chưa có đơn ứng tuyển</h3>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Bạn chưa ứng tuyển vào công việc nào. Hãy bắt đầu tìm kiếm việc làm phù hợp!
-            </p>
             <Link href="/jobs">
               <Button className="mt-4">
                 Tìm việc ngay
@@ -159,144 +128,110 @@ export default function DashboardAppliedJobsPage() {
           </motion.div>
         ) : (
           <>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.4 }}
-              className="bg-white dark:bg-gray-900 rounded-lg shadow-theme-sm border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-theme-md transition-shadow duration-300"
-            >
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-800">
-                    <tr>
-                      <th className="p-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Công việc
-                      </th>
-                      <th className="p-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Ngày ứng tuyển
-                      </th>
-                      <th className="p-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Trạng thái
-                      </th>
-                      <th className="p-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Hành động
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                    {applications.map((app, index) => (
-                      <motion.tr
-                        key={app.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 + index * 0.05, duration: 0.3 }}
-                        whileHover={{ backgroundColor: "rgba(249, 250, 251, 0.5)" }}
-                        className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors duration-200"
-                      >
-                        <td className="p-4">
-                          <div className="flex items-center space-x-3">
-                            <motion.div
-                              whileHover={{ scale: 1.1, rotate: 5 }}
-                              transition={{ duration: 0.2 }}
-                              className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-100 dark:border-gray-700 bg-white"
-                            >
-                              {(() => {
-                                const getImageUrl = (path: string | undefined | null) => {
-                                  if (!path) return null;
-                                  if (path.startsWith('http') || path.startsWith('data:')) return path;
+            <div className="grid gap-4">
+              {applications.map((app, index) => {
+                const isHired = ['HIRED', 'APPROVED', 'OFFERED'].includes(app.status);
+                const isInterview = ['INTERVIEW'].includes(app.status);
+                const isRejected = ['REJECTED', 'WITHDRAWN'].includes(app.status);
 
-                                  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
-                                  const baseUrl = apiUrl.replace(/\/api\/v1\/?$/, '');
+                let statusColor = "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800";
+                if (isHired) statusColor = "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800";
+                if (isInterview) statusColor = "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800";
+                if (isRejected) statusColor = "bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800";
 
-                                  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
-                                };
+                return (
+                  <motion.div
+                    key={app.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="group relative bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-lg hover:border-brand-500/20 dark:hover:border-brand-500/20 transition-all duration-300"
+                  >
+                    <div className="flex flex-col sm:flex-row gap-5">
+                      {/* Logo */}
+                      <div className="shrink-0">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl border border-gray-100 dark:border-gray-800 bg-white p-2 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                          {app.companyLogo ? (
+                            <img
+                              src={app.companyLogo.startsWith('http') ? app.companyLogo : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '')}/${app.companyLogo.replace(/^\//, '')}`}
+                              alt={app.companyName}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement!.innerText = '🏢';
+                              }}
+                            />
+                          ) : (
+                            <span className="text-3xl">🏢</span>
+                          )}
+                        </div>
+                      </div>
 
-                                const logoSrc = getImageUrl(app.companyLogo);
-
-                                // Fallback to initial if no logo
-                                if (!logoSrc) {
-                                  return (
-                                    <div className="w-full h-full bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
-                                      {app.companyName?.charAt(0)?.toUpperCase() || "C"}
-                                    </div>
-                                  );
-                                }
-
-                                return (
-                                  <img
-                                    src={logoSrc}
-                                    alt={app.companyName}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = 'none';
-                                      e.currentTarget.parentElement?.querySelector('.fallback-initial')?.classList.remove('hidden');
-                                    }}
-                                  />
-                                );
-                              })()}
-                              {/* Hidden fallback for onError handling */}
-                              <div className="fallback-initial hidden absolute inset-0 bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
-                                {app.companyName?.charAt(0)?.toUpperCase() || "C"}
-                              </div>
-                            </motion.div>
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white/90">
-                                {app.jobTitle}
-                              </p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {app.companyName}
-                              </p>
-                            </div>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0 py-1">
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2">
+                          <div>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate pr-4" title={app.jobTitle}>
+                              {app.jobTitle}
+                            </h3>
+                            <p className="text-base font-medium text-gray-600 dark:text-gray-400 mt-1">
+                              {app.companyName}
+                            </p>
                           </div>
-                        </td>
-                        <td className="p-4 text-sm text-gray-600 dark:text-gray-400">
-                          {formatDate(app.appliedAt)}
-                        </td>
-                        <td className="p-4 text-sm">
-                          <motion.span
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.4 + index * 0.05 }}
-                            className={`flex items-center ${statusColor(app.status)}`}
-                          >
+
+                          {/* Status Badge - Desktop Position */}
+                          <div className="hidden md:block">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${statusColor}`}>
+                              {statusLabel(app.status)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 mt-4 text-sm">
+                          {/* Status Badge - Mobile Position */}
+                          <span className={`md:hidden inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${statusColor}`}>
                             {statusLabel(app.status)}
-                          </motion.span>
-                        </td>
-                        <td className="p-4">
-                          <Link href={`/jobs/${app.jobId}`}>
-                            <motion.div
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <Button variant="outline" className="text-sm py-2 px-4">
-                                Xem chi tiết
-                              </Button>
-                            </motion.div>
-                          </Link>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </motion.div>
+                          </span>
+
+                          <span className="flex items-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-full text-xs">
+                            {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString("vi-VN") : "N/A"}
+                          </span>
+
+                          {app.desiredLocation && (
+                            <span className="flex items-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-full text-xs">
+                              {app.desiredLocation}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="flex items-center sm:flex-col sm:justify-center border-t border-gray-100 dark:border-gray-800 sm:border-t-0 sm:border-l sm:pl-5 mt-2 sm:mt-0 pt-3 sm:pt-0">
+                        <Button
+                          onClick={() => handleStartChat(app)}
+                          className="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white shadow-sm rounded-xl px-5 py-2.5 font-semibold text-sm whitespace-nowrap transition-all flex items-center justify-center"
+                        >
+                          Nhắn tin
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
 
             {pagination.totalPages > 1 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.4 }}
-              >
+              <div className="flex justify-center pt-6">
                 <Pagination
                   currentPage={pagination.page + 1}
                   totalPages={pagination.totalPages}
                   onPageChange={handlePageChange}
                 />
-              </motion.div>
+              </div>
             )}
           </>
         )}
-      </motion.div>
-    </PageTransition >
+      </div>
+    </PageTransition>
   );
 }

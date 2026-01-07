@@ -4,8 +4,9 @@ import { useAuth } from "@/context/AuthContext";
 import { hrService } from "@/services/hr.service";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import AdminSkeleton from "../admin/AdminSkeleton";
 
-export default function CompanyGuard({ children }: { children: React.ReactNode }) {
+export default function CompanyGuard({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
     const { user, isAuthenticated, isLoading } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
@@ -17,7 +18,6 @@ export default function CompanyGuard({ children }: { children: React.ReactNode }
 
             if (!isAuthenticated || !user) {
                 // If not logged in, let AuthGuard handle it or redirect to login
-                // But this guard assumes it's inside an authenticated area usually
                 return;
             }
 
@@ -60,7 +60,6 @@ export default function CompanyGuard({ children }: { children: React.ReactNode }
                 }
             } else {
                 // Not HR (e.g. Admin accessing HR route? Or Candidate?)
-                // If it's an admin, maybe allow? For now assuming strict HR check
                 setIsChecking(false);
             }
         };
@@ -69,11 +68,8 @@ export default function CompanyGuard({ children }: { children: React.ReactNode }
     }, [user, isAuthenticated, isLoading, pathname, router]);
 
     if (isLoading || isChecking) {
-        return (
-            <div className="flex h-screen items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent"></div>
-            </div>
-        );
+        if (fallback) return <>{fallback}</>;
+        return <AdminSkeleton />;
     }
 
     return <>{children}</>;

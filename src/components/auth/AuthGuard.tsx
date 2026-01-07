@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+export default function AuthGuard({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
     const { isAuthenticated, isLoading } = useAuth();
     const router = useRouter();
 
@@ -15,6 +15,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }, [isLoading, isAuthenticated, router]);
 
     if (isLoading) {
+        if (fallback) return <>{fallback}</>;
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-brand-500 border-t-transparent"></div>

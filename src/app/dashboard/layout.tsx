@@ -13,6 +13,9 @@ import ChatWidget from "@/components/shared/ChatWidget";
 import AuthGuard from "@/components/auth/AuthGuard";
 
 import CandidateSidebar from "@/components/dashboard/CandidateSidebar";
+import { PageTransition } from "@/components/shared/PageTransition";
+import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
+
 
 export default function DashboardLayout({
   children,
@@ -24,33 +27,35 @@ export default function DashboardLayout({
       <ToastProvider>
         <ChatProvider>
           <FilterProvider>
-            <AuthGuard>
-              <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
-                {/* Header */}
-                <PublicHeader />
+            <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
+              {/* Header */}
+              <PublicHeader />
 
-                {/* Main Content with Sidebar */}
-                <div className="flex-1">
-                  <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="flex flex-col lg:flex-row gap-8">
-                      {/* Sidebar */}
-                      <aside className="lg:w-64 flex-shrink-0">
-                        <CandidateSidebar />
-                      </aside>
+              {/* Main Content with Sidebar */}
+              <div className="flex-1">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+                  <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Sidebar */}
+                    <aside className="lg:w-64 flex-shrink-0">
+                      <CandidateSidebar />
+                    </aside>
 
-                      {/* Main Content */}
-                      <main className="flex-1 min-w-0">
-                        {children}
-                      </main>
-                    </div>
+                    {/* Main Content */}
+                    <main className="flex-1 min-w-0">
+                      <AuthGuard fallback={<DashboardSkeleton />}>
+                        <PageTransition>
+                          {children}
+                        </PageTransition>
+                      </AuthGuard>
+                    </main>
                   </div>
                 </div>
-
-                {/* Footer */}
-                <Footer />
-                <ChatWidget />
               </div>
-            </AuthGuard>
+
+              {/* Footer */}
+              <Footer />
+              <ChatWidget />
+            </div>
           </FilterProvider>
         </ChatProvider>
       </ToastProvider>

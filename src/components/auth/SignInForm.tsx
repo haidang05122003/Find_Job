@@ -66,6 +66,9 @@ export default function SignInForm() {
             router.push("/hr/setup-company");
           }
         } else {
+          // Explicitly redirect candidates to Home page
+          // Add a small delay to ensure AuthContext state propagates
+          await new Promise(resolve => setTimeout(resolve, 100));
           router.push("/");
         }
       } else {

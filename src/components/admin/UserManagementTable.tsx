@@ -33,7 +33,7 @@ const UserManagementTable: React.FC = () => {
   const fetchUsers = async (page: number) => {
     setLoading(true);
     try {
-      const params: any = { page: page, size: 10 }; // Make sure pagination is 1-based or 0-based consistently. AdminService handles -1.
+      const params: any = { page: page, size: 10 };
       if (role) params.role = role;
       if (status) params.status = status;
       if (debouncedKeyword) params.keyword = debouncedKeyword;

@@ -19,10 +19,29 @@ interface Member {
     phone?: string;
 }
 
+import ConfirmModal from "@/components/shared/ConfirmModal";
+
+// ... (keep interface Member)
+
 export default function MemberManagementPage() {
     const [members, setMembers] = useState<Member[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const { success: toastSuccess, error: toastError } = useToast();
+
+    // Modal State
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        type: 'REJECT' | 'REMOVE' | null;
+        id: number | null;
+        title: string;
+        message: string;
+    }>({
+        isOpen: false,
+        type: null,
+        id: null,
+        title: '',
+        message: ''
+    });
 
     const fetchMembers = async () => {
         try {
@@ -55,7 +74,6 @@ export default function MemberManagementPage() {
             const res = await hrService.approveMember(id);
             if (res.success) {
                 toastSuccess("Đã phê duyệt thành viên");
-                // Optimistic Update: Set status to ACTIVE
                 setMembers(prev => prev.map(m => m.id === id ? { ...m, status: "ACTIVE" } : m));
             } else {
                 toastError(res.message || "Lỗi khi duyệt");
@@ -65,35 +83,52 @@ export default function MemberManagementPage() {
         }
     };
 
-    const handleReject = async (id: number) => {
-        if (!confirm("Bạn có chắc muốn từ chối/xóa thành viên này chưa kích hoạt không?")) return;
-        try {
-            const res = await hrService.rejectMember(id);
-            if (res.success) {
-                toastSuccess("Đã từ chối thành viên");
-                // Optimistic Update: Remove from list
-                setMembers(prev => prev.filter(m => m.id !== id));
-            } else {
-                toastError(res.message || "Lỗi khi từ chối");
-            }
-        } catch (e) {
-            toastError("Lỗi hệ thống");
-        }
+    // Open Modal Handlers
+    const openRejectModal = (id: number) => {
+        setConfirmModal({
+            isOpen: true,
+            type: 'REJECT',
+            id,
+            title: 'Từ chối thành viên',
+            message: 'Bạn có chắc muốn từ chối/xóa thành viên này chưa kích hoạt không? Hành động này không thể hoàn tác.'
+        });
     };
 
-    const handleRemove = async (id: number) => {
-        if (!confirm("Bạn có chắc muốn xóa thành viên này khỏi công ty không?")) return;
+    const openRemoveModal = (id: number) => {
+        setConfirmModal({
+            isOpen: true,
+            type: 'REMOVE',
+            id,
+            title: 'Xóa thành viên',
+            message: 'Bạn có chắc muốn xóa thành viên này khỏi công ty không? Họ sẽ mất quyền truy cập vào hệ thống.'
+        });
+    };
+
+    const closeConfirmModal = () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false, type: null, id: null }));
+    };
+
+    const handleConfirmAction = async () => {
+        if (!confirmModal.id || !confirmModal.type) return;
+
         try {
-            const res = await hrService.removeMember(id);
-            if (res.success) {
-                toastSuccess("Đã xóa thành viên");
-                // Optimistic Update: Remove from list
-                setMembers(prev => prev.filter(m => m.id !== id));
+            let res;
+            if (confirmModal.type === 'REJECT') {
+                res = await hrService.rejectMember(confirmModal.id);
             } else {
-                toastError(res.message || "Lỗi khi xóa");
+                res = await hrService.removeMember(confirmModal.id);
+            }
+
+            if (res.success) {
+                toastSuccess(confirmModal.type === 'REJECT' ? "Đã từ chối thành viên" : "Đã xóa thành viên");
+                setMembers(prev => prev.filter(m => m.id !== confirmModal.id));
+            } else {
+                toastError(res.message || "Lỗi xảy ra");
             }
         } catch (e) {
             toastError("Lỗi hệ thống");
+        } finally {
+            closeConfirmModal();
         }
     };
 
@@ -247,7 +282,7 @@ export default function MemberManagementPage() {
                                                         Duyệt hồ sơ
                                                     </button>
                                                     <button
-                                                        onClick={() => handleReject(member.id)}
+                                                        onClick={() => openRejectModal(member.id)}
                                                         className="px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 rounded-md border border-red-200 hover:bg-red-100 transition-colors"
                                                     >
                                                         Từ chối
@@ -255,7 +290,7 @@ export default function MemberManagementPage() {
                                                 </div>
                                             ) : (
                                                 <button
-                                                    onClick={() => handleRemove(member.id)}
+                                                    onClick={() => openRemoveModal(member.id)}
                                                     className="px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 rounded-md border border-gray-200 hover:bg-gray-100 hover:text-red-600 hover:border-red-200 transition-all"
                                                 >
                                                     Xóa thành viên
@@ -269,6 +304,16 @@ export default function MemberManagementPage() {
                     </table>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                onClose={closeConfirmModal}
+                onConfirm={handleConfirmAction}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText={confirmModal.type === 'REJECT' ? 'Từ chối' : 'Xóa thành viên'}
+                variant="danger"
+            />
         </div>
     );
 }

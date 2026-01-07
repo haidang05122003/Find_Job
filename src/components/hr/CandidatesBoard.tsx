@@ -382,7 +382,7 @@ const CandidatesBoard: React.FC = () => {
           <CandidateProfileModal
             isOpen={!!selectedProfileApp}
             onClose={() => setSelectedProfileApp(null)}
-            candidateId={selectedProfileApp?.candidateId || ""}
+            candidateId={selectedProfileApp?.candidateProfileId || selectedProfileApp?.candidateId || ""}
             applicationData={selectedProfileApp ? { email: selectedProfileApp.candidateEmail, name: selectedProfileApp.candidateName } : undefined}
           />
         </>

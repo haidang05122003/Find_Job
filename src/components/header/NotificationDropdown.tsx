@@ -97,8 +97,33 @@ export default function NotificationDropdown() {
                   href={notif.data?.link as string || notif.link || '#'}
                 >
                   <span className="relative block w-full h-10 rounded-full z-1 max-w-10">
-                    <div className="w-10 h-10 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center font-bold">
-                      H
+                    {/* Dynamic Icon based on Title */}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg
+                      ${notif.title?.toLowerCase().includes('duyệt') ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : ''}
+                      ${notif.title?.toLowerCase().includes('từ chối') ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' : ''}
+                      ${notif.title?.toLowerCase().includes('khóa') ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : ''}
+                      ${!notif.title?.match(/duyệt|từ chối|khóa/i) ? 'bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400' : ''}
+                    `}>
+                      {notif.title?.toLowerCase().includes('duyệt') && (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                      {notif.title?.toLowerCase().includes('từ chối') && (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                      {notif.title?.toLowerCase().includes('khóa') && (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      )}
+                      {!notif.title?.match(/duyệt|từ chối|khóa/i) && (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                      )}
                     </div>
                     {!notif.isRead && (
                       <span className="absolute bottom-0 right-0 z-10 h-2.5 w-full max-w-2.5 rounded-full border-[1.5px] border-white bg-success-500 dark:border-gray-900"></span>

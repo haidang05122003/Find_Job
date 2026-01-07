@@ -14,7 +14,7 @@ interface AuthContextValue extends AuthState {
   switchRole: (role: UserRole) => void;
   hasRole: (role: UserRole) => boolean;
   canAccessRoute: (requiredRole: UserRole) => boolean;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -45,22 +45,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isAuthenticated: true,
           isLoading: false,
         }));
+        return true;
       } else {
+        // Only set not authenticated, do not remove token blindly unless 401 (handled by axios)
         setState({ user: null, isAuthenticated: false, isLoading: false });
+        return false;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch user:', error);
+      // If error is 401, axios client likely removed token. 
+      // If other error, keep token but set isAuthenticated false.
       setState({ user: null, isAuthenticated: false, isLoading: false });
-      localStorage.removeItem('auth_token');
+
+      // Explicitly check for 401 to be sure
+      if (error?.response?.status === 401) {
+        localStorage.removeItem('auth_token');
+      }
+      return false;
     }
   }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (token) {
-      // Don't set loading true here avoids flicker, just fetch
-      // setState(prev => ({ ...prev, token, isLoading: true })); 
-      // Actually we need to set token at least.
       setState(prev => ({ ...prev, token }));
       fetchUser();
     } else {
@@ -102,7 +109,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('auth_token', token);
 
         // Fetch user details immediately after login
-        await fetchUser();
+        const userFetched = await fetchUser();
+        if (!userFetched) {
+          throw new Error('Login succeeded but failed to fetch user profile.');
+        }
         return response.data;
       } else {
         throw new Error(response.message || 'Login failed');

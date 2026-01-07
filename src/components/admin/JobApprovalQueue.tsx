@@ -7,6 +7,7 @@ import JobDetailModal from "./JobDetailModal";
 import type { Job } from "@/types/job";
 import Pagination from "@/components/shared/Pagination";
 import { useToast } from "@/context/ToastContext";
+import ConfirmModal from "@/components/shared/ConfirmModal";
 
 const JobApprovalQueue: React.FC = () => {
   const { success, error } = useToast();
@@ -17,13 +18,34 @@ const JobApprovalQueue: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Confirm Modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    type: 'LOCK' | 'UNLOCK' | 'REJECT' | null;
+    id: string | null;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    type: null,
+    id: null,
+    title: '',
+    message: ''
+  });
 
   const fetchJobs = async () => {
     setLoading(true);
     try {
       // Pass undefined for ALL to get all statuses
       const statusParam = activeTab === 'ALL' ? undefined : activeTab;
-      const res = await adminService.getAllJobs({ page: page, limit: 10, status: statusParam });
+      const res = await adminService.getAllJobs({
+        page: page,
+        limit: 10,
+        status: statusParam,
+        keyword: searchTerm
+      });
       if (res.data) {
         setJobs(res.data.content);
         setTotalPages(res.data.totalPages);
@@ -39,6 +61,12 @@ const JobApprovalQueue: React.FC = () => {
   useEffect(() => {
     setPage(1); // Reset to page 1 on tab change
   }, [activeTab]);
+
+  useEffect(() => {
+    if (searchTerm === "") {
+      fetchJobs();
+    }
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchJobs();
@@ -59,25 +87,57 @@ const JobApprovalQueue: React.FC = () => {
     }
   };
 
-  const handleLock = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn ẩn (khóa) bài đăng này?")) return;
-    try {
-      await adminService.lockJob(id);
-      success("Đã khóa bài đăng vi phạm");
-      fetchJobs();
-    } catch (err: any) {
-      error("Không thể khóa bài đăng");
-    }
+  const openLockModal = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'LOCK',
+      id,
+      title: 'Khóa bài đăng (Vi phạm)',
+      message: 'Hành động này sẽ ẩn tin tuyển dụng khỏi hệ thống do vi phạm chính sách. Nhà tuyển dụng sẽ không thể mở lại cho đến khi được Admin mở khóa. Bạn có chắc chắn muốn tiếp tục?'
+    });
   };
 
-  const handleUnlock = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn mở khóa (hiển thị lại) bài đăng này?")) return;
+  const openRejectModal = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'REJECT',
+      id,
+      title: 'Từ chối tin tuyển dụng',
+      message: 'Bạn có chắc chắn muốn TỪ CHỐI (GỠ) tin tuyển dụng này? Nhà tuyển dụng sẽ nhận được thông báo yêu cầu chỉnh sửa.'
+    });
+  };
+
+  const openUnlockModal = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'UNLOCK',
+      id,
+      title: 'Mở khóa bài đăng',
+      message: 'Bài đăng sẽ được hiển thị lại trên bảng tin tuyển dụng. Bạn có chắc chắn muốn mở khóa?'
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmModal.id || !confirmModal.type) return;
+
     try {
-      await adminService.unlockJob(id);
-      success("Đã mở khóa bài đăng");
+      if (confirmModal.type === 'LOCK') {
+        await adminService.lockJob(confirmModal.id);
+        success("Đã khóa bài đăng vi phạm");
+      } else if (confirmModal.type === 'UNLOCK') {
+        await adminService.unlockJob(confirmModal.id);
+        success("Đã mở khóa bài đăng");
+      } else if (confirmModal.type === 'REJECT') {
+        await adminService.approveJob(confirmModal.id, { action: 'REJECT' });
+        success("Đã từ chối tin đăng");
+      }
       fetchJobs();
     } catch (err: any) {
-      error("Không thể mở khóa bài đăng");
+      if (confirmModal.type === 'LOCK') error("Không thể khóa bài đăng");
+      else if (confirmModal.type === 'UNLOCK') error("Không thể mở khóa bài đăng");
+      else error("Không thể từ chối tin đăng");
+    } finally {
+      setConfirmModal(prev => ({ ...prev, isOpen: false, type: null, id: null }));
     }
   };
 
@@ -100,22 +160,40 @@ const JobApprovalQueue: React.FC = () => {
         desc="Danh sách tất cả tin tuyển dụng trong hệ thống."
       >
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 border-b border-gray-100 dark:border-gray-800">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors relative ${activeTab === tab.id
-                ? 'text-brand-600 dark:text-brand-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-            >
-              {tab.label}
-              {activeTab === tab.id && (
-                <div className="absolute bottom-[-1px] left-0 w-full h-0.5 bg-brand-500 rounded-t-full" />
-              )}
-            </button>
-          ))}
+        <div className="flex flex-col sm:flex-row justify-between items-end gap-4 mb-6 border-b border-gray-100 dark:border-gray-800 pb-2">
+          <div className="flex gap-2 overflow-x-auto w-full sm:w-auto no-scrollbar">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors relative ${activeTab === tab.id
+                  ? 'text-brand-600 dark:text-brand-400'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
+              >
+                {tab.label}
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-[-1px] left-0 w-full h-0.5 bg-brand-500 rounded-t-full" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative w-full sm:w-auto mb-2 sm:mb-0">
+            <input
+              type="text"
+              placeholder="Tìm kiếm tin tuyển dụng..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && fetchJobs()}
+              className="w-full sm:w-64 rounded-xl border border-gray-200 bg-transparent px-4 py-2 text-sm text-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-100 dark:border-gray-700 dark:text-gray-300 pl-10"
+            />
+            <div className="absolute left-3 top-2.5 text-gray-400">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
         </div>
 
         <div className="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-800">
@@ -252,7 +330,7 @@ const JobApprovalQueue: React.FC = () => {
                               Duyệt
                             </button>
                             <button
-                              onClick={() => handleApprove(job.id, 'REJECT')}
+                              onClick={() => openRejectModal(job.id)}
                               className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors border border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 dark:border-red-900/30"
                             >
                               Từ chối
@@ -262,7 +340,7 @@ const JobApprovalQueue: React.FC = () => {
 
                         {job.status === 'APPROVED' && (
                           <button
-                            onClick={() => handleApprove(job.id, 'REJECT')}
+                            onClick={() => openRejectModal(job.id)}
                             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors border border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 dark:border-red-900/30"
                           >
                             Gỡ tin
@@ -271,7 +349,7 @@ const JobApprovalQueue: React.FC = () => {
 
                         {(job.status === 'APPROVED' || job.status === 'PENDING') && (
                           <button
-                            onClick={() => handleLock(job.id)}
+                            onClick={() => openLockModal(job.id)}
                             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-700 transition-colors border border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:border-gray-700"
                             title="Ẩn tin (Khóa)"
                           >
@@ -283,7 +361,7 @@ const JobApprovalQueue: React.FC = () => {
 
                         {(job.status === 'REJECTED' || job.status === 'CLOSED') && (
                           <button
-                            onClick={() => handleUnlock(job.id)}
+                            onClick={() => openUnlockModal(job.id)}
                             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-colors border border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30 dark:border-blue-900/30"
                             title="Mở lại (Unlock)"
                           >
@@ -334,6 +412,20 @@ const JobApprovalQueue: React.FC = () => {
         job={selectedJob}
         onApprove={(id) => handleApprove(id, 'APPROVE')}
         onReject={(id) => handleApprove(id, 'REJECT')}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false, type: null, id: null }))}
+        onConfirm={handleConfirmAction}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={
+          confirmModal.type === 'LOCK' ? 'Khóa bài đăng' :
+            confirmModal.type === 'UNLOCK' ? 'Mở khóa' :
+              confirmModal.type === 'REJECT' ? 'Từ chối (Gỡ)' : 'Xác nhận'
+        }
+        variant={confirmModal.type === 'LOCK' || confirmModal.type === 'REJECT' ? 'danger' : 'info'}
       />
     </>
   );

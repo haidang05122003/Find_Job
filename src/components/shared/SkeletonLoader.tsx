@@ -36,9 +36,9 @@ export const SkeletonTable = ({ rows = 5 }: { rows?: number }) => (
   </div>
 );
 
-export const SkeletonStats = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {[1, 2, 3].map((i) => (
+export const SkeletonStats = ({ count = 3, className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" }: { count?: number, className?: string }) => (
+  <div className={className}>
+    {Array.from({ length: count }).map((_, i) => (
       <div key={i} className="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-800 animate-pulse">
         <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-20 mb-2"></div>
         <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-32"></div>

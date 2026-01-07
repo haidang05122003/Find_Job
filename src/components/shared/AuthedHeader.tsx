@@ -15,7 +15,7 @@ import {
 } from "./icons";
 
 export const AuthedHeader: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   return (
@@ -99,35 +99,42 @@ export const AuthedHeader: React.FC = () => {
           {/* User Menu */}
           {/* User Menu */}
           <div className="relative">
-            <button
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center space-x-2 transition-all duration-200 hover:opacity-80"
-              aria-label="User menu"
-            >
-              <Image
-                src={user?.avatarUrl && user.avatarUrl.startsWith('http') ? user.avatarUrl : (user?.avatarUrl ? `http://localhost:8080${user.avatarUrl}` : "https://placehold.co/40x40/EBF4FF/3B82F6?text=U")}
-                alt="User Avatar"
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-full border-2 border-gray-200 dark:border-gray-700 object-cover"
-              />
-              <span className="hidden lg:inline font-semibold text-gray-700 dark:text-gray-300">
-                {(user?.roles?.includes('ADMIN') || user?.roles?.includes('ROLE_ADMIN')) ? "Administrator" : (user?.fullName || user?.name || "User")}
-              </span>
-              <svg
-                className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""
-                  }`}
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+            {isLoading ? (
+              <div className="flex items-center space-x-2 animate-pulse">
+                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                <div className="hidden lg:block w-24 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center space-x-2 transition-all duration-200 hover:opacity-80"
+                aria-label="User menu"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clipRule="evenodd"
+                <Image
+                  src={user?.avatarUrl && user.avatarUrl.startsWith('http') ? user.avatarUrl : (user?.avatarUrl ? `http://localhost:8080${user.avatarUrl}` : "https://placehold.co/40x40/EBF4FF/3B82F6?text=U")}
+                  alt="User Avatar"
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full border-2 border-gray-200 dark:border-gray-700 object-cover"
                 />
-              </svg>
-            </button>
+                <span className="hidden lg:inline font-semibold text-gray-700 dark:text-gray-300">
+                  {(user?.roles?.includes('ADMIN') || user?.roles?.includes('ROLE_ADMIN')) ? "Administrator" : (user?.fullName || user?.name || "User")}
+                </span>
+                <svg
+                  className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""
+                    }`}
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            )}
             {/* User Dropdown */}
             {userMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700 animate-slide-in-right">

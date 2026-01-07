@@ -81,7 +81,7 @@ export default function ForgotPasswordForm() {
                   size="sm"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Đang gửi..." : "Gửi link đặt lại mật khẩu"}
+                  {isLoading ? "Đang gửi..." : "Gửi mã OTP để đổi mật khẩu"}
                 </Button>
               </div>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import ThemeTogglerTwo from "@/components/common/ThemeTogglerTwo";
+
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
@@ -125,10 +125,7 @@ export default function AuthLayout({
             <div className="absolute bottom-20 right-10 h-32 w-32 rounded-full bg-white/5 blur-2xl" />
           </div>
 
-          {/* Theme Toggle */}
-          <div className="fixed bottom-6 right-6 z-50 hidden sm:block">
-            <ThemeTogglerTwo />
-          </div>
+
         </div>
       </div>
     </ToastProvider >

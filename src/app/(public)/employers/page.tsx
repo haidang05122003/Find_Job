@@ -5,6 +5,7 @@ import { SearchFilterBar } from "@/components/shared/SearchFilterBar";
 import Pagination from "@/components/shared/Pagination";
 import CompanyCard from "@/components/shared/CompanyCard";
 import PageBanner from "@/components/shared/PageBanner";
+import EmployerListSkeleton from "@/components/company/EmployerListSkeleton";
 import type { Company } from "@/types/company";
 import { companyService } from "@/services/company.service";
 import { PAGINATION } from "@/lib/constants";
@@ -153,10 +154,7 @@ export default function BrowseEmployersPage() {
           </div>
 
           {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
-              <span className="ml-3 text-gray-600 dark:text-gray-400">Đang tải...</span>
-            </div>
+            <EmployerListSkeleton />
           ) : companies.length === 0 ? (
             <div className="text-center py-12">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

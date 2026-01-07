@@ -133,11 +133,11 @@ export default function ResetPasswordForm() {
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto bg-white dark:bg-gray-900 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-800">
         <div className="text-center mb-8">
           <h1 className="mb-2 text-2xl font-bold text-gray-800 dark:text-white">
-            {step === 1 ? "Verify" : "Đặt lại mật khẩu"}
+            {step === 1 ? "Xác thực OTP" : "Đặt lại mật khẩu"}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {step === 1
-              ? "Your code was sent to you via email"
+              ? "Mã xác thực đã được gửi đến email của bạn"
               : "Nhập mật khẩu mới của bạn"}
           </p>
           {step === 1 && email && (
@@ -168,11 +168,11 @@ export default function ResetPasswordForm() {
                   size="lg"
                   disabled={isLoading || otp.length !== 6}
                 >
-                  {isLoading ? "Verifying..." : "Verify"}
+                  {isLoading ? "Đang xác thực..." : "Xác thực"}
                 </Button>
 
                 <div className="text-center text-sm text-gray-500">
-                  Didn't receive code?{" "}
+                  Bạn không nhận được mã?{" "}
                   <button
                     type="button"
                     onClick={handleResendOtp}
@@ -182,7 +182,7 @@ export default function ResetPasswordForm() {
                       : "text-brand-500 hover:text-brand-600 dark:text-brand-400"
                       }`}
                   >
-                    {countdown > 0 ? `Request again in ${countdown}s` : "Request again"}
+                    {countdown > 0 ? `Gửi lại sau ${countdown}s` : "Gửi lại mã"}
                   </button>
                 </div>
               </div>

@@ -95,13 +95,8 @@ export default function ChatSidebar({ basePath = '/messages' }: { basePath?: str
             <div className="flex flex-col gap-4 p-5 pb-2">
                 <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        Chats
+                        Tin nhắn
                     </h2>
-                    <button className="rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300">
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                    </button>
                 </div>
 
                 <div className="relative">
@@ -202,6 +197,6 @@ export default function ChatSidebar({ basePath = '/messages' }: { basePath?: str
                     })
                 )}
             </div>
-        </div >
+        </div>
     );
 }

@@ -12,6 +12,8 @@ import AdminGuard from "@/components/auth/AdminGuard";
 
 import { usePathname } from "next/navigation";
 
+import { PageTransition } from "@/components/shared/PageTransition";
+
 export default function AdminLayout({
   children,
 }: {
@@ -31,20 +33,22 @@ export default function AdminLayout({
     <AuthProvider>
       <ToastProvider>
         <ChatProvider>
-          <AdminGuard>
-            <div className="min-h-screen xl:flex">
-              <AdminSidebar />
-              <Backdrop />
-              <div
-                className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
-              >
-                <AppHeader />
-                <div className={`mx-auto ${isChatPage ? 'p-0 w-full max-w-full' : 'p-4 max-w-(--breakpoint-2xl) md:p-6'}`}>
-                  {children}
-                </div>
+          <div className="min-h-screen xl:flex">
+            <AdminSidebar />
+            <Backdrop />
+            <div
+              className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
+            >
+              <AppHeader />
+              <div className={`mx-auto ${isChatPage ? 'p-0 w-full max-w-full' : 'p-4 max-w-(--breakpoint-2xl) md:p-6'}`}>
+                <AdminGuard>
+                  <PageTransition>
+                    {children}
+                  </PageTransition>
+                </AdminGuard>
               </div>
             </div>
-          </AdminGuard>
+          </div>
         </ChatProvider>
       </ToastProvider>
     </AuthProvider>

@@ -9,6 +9,7 @@ import { useFilters } from '@/context/FilterContext';
 import { useToast } from '@/context/ToastContext';
 import { jobService } from '@/services/job.service';
 import { Dropdown } from '@/components/ui/dropdown/Dropdown';
+import JobSearchSkeleton from '@/components/jobs/JobSearchSkeleton';
 
 export default function JobsPage() {
   const { filters: contextFilters, updateFilter, resetFilters, setFilters } = useFilters();
@@ -234,6 +235,10 @@ export default function JobsPage() {
     }));
   }, [contextFilters]);
 
+  if (loading) {
+    return <JobSearchSkeleton />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
 
@@ -414,9 +419,7 @@ export default function JobsPage() {
           {/* Job Grid */}
           <main>
             {loading ? (
-              <div className="flex justify-center p-12">
-                <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-              </div>
+              <JobSearchSkeleton />
             ) : (
               <>
                 <JobGrid

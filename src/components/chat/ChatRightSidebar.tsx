@@ -165,26 +165,41 @@ export default function ChatRightSidebar() {
                 ) : (
                     // Candidate View: Show Job Title and Company
                     items.map((item) => (
-                        <div key={item.id} className="group rounded-lg border border-gray-100 p-3 hover:border-brand-200 hover:shadow-sm dark:border-gray-800 dark:hover:border-brand-900 bg-white dark:bg-gray-900 transition-all">
-                            <div className="mb-2">
-                                <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100 line-clamp-2">{item.jobTitle}</h4>
-                                <p className="text-xs text-gray-500 mt-1">{item.companyName}</p>
+                        <div key={item.id} className="group flex items-center gap-3 rounded-xl p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border border-gray-100 dark:border-gray-800">
+                            {/* Logo */}
+                            <div className="relative shrink-0 h-10 w-10 rounded-lg border border-gray-100 bg-white flex items-center justify-center overflow-hidden">
+                                {item.companyLogo ? (
+                                    <img
+                                        src={item.companyLogo.startsWith('http') ? item.companyLogo : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '')}/${item.companyLogo.replace(/^\//, '')}`}
+                                        alt={item.companyName}
+                                        className="h-full w-full object-contain p-1"
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                            e.currentTarget.parentElement!.innerText = '🏢';
+                                        }}
+                                    />
+                                ) : (
+                                    <span className="text-lg">🏢</span>
+                                )}
                             </div>
-                            <div className="flex items-center justify-between mt-3">
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${item.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                    item.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                        item.status === 'offered' ? 'bg-green-100 text-green-700' :
-                                            'bg-gray-100 text-gray-600'
-                                    }`}>
-                                    {item.status}
-                                </span>
-                                <button
-                                    onClick={() => item.recruiterId ? handleStartChat(item.recruiterId) : showError('Không tìm thấy thông tin nhà tuyển dụng')}
-                                    className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 font-medium transition-colors"
-                                >
-                                    Liên hệ
-                                </button>
+
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                                <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate" title={item.jobTitle}>
+                                    {item.jobTitle}
+                                </h4>
+                                <p className="text-xs text-gray-500 truncate mt-0.5">
+                                    {item.companyName}
+                                </p>
                             </div>
+
+                            {/* Action */}
+                            <button
+                                onClick={() => item.recruiterId ? handleStartChat(item.recruiterId) : showError('Chưa có thông tin liên hệ')}
+                                className="shrink-0 bg-brand-50 hover:bg-brand-100 text-brand-600 dark:bg-brand-900/20 dark:text-brand-400 text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+                            >
+                                Nhắn tin
+                            </button>
                         </div>
                     ))
                 )}

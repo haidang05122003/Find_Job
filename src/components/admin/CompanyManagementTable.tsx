@@ -45,9 +45,6 @@ const CompanyManagementTable: React.FC = () => {
             const params: any = { page: page - 1, size: 10 };
             if (status) params.status = status;
             if (debouncedKeyword) params.keyword = debouncedKeyword;
-
-            // Use getAllCompanies or getPendingCompanies depending on requirement.
-            // User asked for "Company Management", likely all companies.
             const res = await adminService.getAllCompanies(params);
             if (res.data) {
                 setCompanies(res.data.content);

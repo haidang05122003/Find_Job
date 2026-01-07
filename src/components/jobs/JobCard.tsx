@@ -6,6 +6,7 @@ import type { Job } from '@/types/job';
 import { getTimeAgo, formatSalary, getJobTypeLabel } from '@/lib/utils/jobHelpers';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { BookmarkIcon } from "@/icons";
 
 interface JobCardProps {
   job: Job;
@@ -187,12 +188,10 @@ const JobCard: React.FC<JobCardProps> = memo(({
           {/* Heart Icon */}
           <button
             onClick={handleBookmark}
-            className={`flex-shrink-0 transition-colors ${isBookmarked ? 'text-red-500' : 'text-gray-300 hover:text-red-500'
+            className={`flex-shrink-0 transition-colors ${isBookmarked ? 'text-brand-500' : 'text-gray-300 hover:text-brand-500'
               }`}
           >
-            <svg className="h-5 w-5" fill={isBookmarked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
+            <BookmarkIcon className={`h-5 w-5 ${isBookmarked ? 'fill-current' : ''}`} />
           </button>
         </div>
 

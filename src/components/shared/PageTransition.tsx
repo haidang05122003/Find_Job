@@ -48,13 +48,13 @@ export const PageTransition = memo(function PageTransition({ children, className
   }
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="popLayout">
       <motion.div
         key={pathname}
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3, ease: EASING }}
         className={className}
       >
         {children}
@@ -74,11 +74,11 @@ interface AnimationProps {
 }
 
 // Memoized FadeIn
-export const FadeIn = memo(function FadeIn({ 
-  children, 
-  delay = 0, 
+export const FadeIn = memo(function FadeIn({
+  children,
+  delay = 0,
   duration = 0.5,
-  className = '' 
+  className = ''
 }: AnimationProps) {
   const prefersReducedMotion = useReducedMotion();
 
@@ -100,11 +100,11 @@ export const FadeIn = memo(function FadeIn({
 });
 
 // Memoized SlideUp
-export const SlideUp = memo(function SlideUp({ 
-  children, 
-  delay = 0, 
+export const SlideUp = memo(function SlideUp({
+  children,
+  delay = 0,
   duration = 0.6,
-  className = '' 
+  className = ''
 }: AnimationProps) {
   const prefersReducedMotion = useReducedMotion();
 
@@ -126,11 +126,11 @@ export const SlideUp = memo(function SlideUp({
 });
 
 // Memoized ScaleIn
-export const ScaleIn = memo(function ScaleIn({ 
-  children, 
-  delay = 0, 
+export const ScaleIn = memo(function ScaleIn({
+  children,
+  delay = 0,
   duration = 0.4,
-  className = '' 
+  className = ''
 }: AnimationProps) {
   const prefersReducedMotion = useReducedMotion();
 
@@ -163,10 +163,10 @@ const createContainerVariants = (staggerDelay: number): Variants => ({
   visible: { opacity: 1, transition: { staggerChildren: staggerDelay } },
 });
 
-export const StaggerContainer = memo(function StaggerContainer({ 
-  children, 
+export const StaggerContainer = memo(function StaggerContainer({
+  children,
   staggerDelay = 0.1,
-  className = '' 
+  className = ''
 }: StaggerContainerProps) {
   const prefersReducedMotion = useReducedMotion();
   const containerVariants = useMemo(() => createContainerVariants(staggerDelay), [staggerDelay]);

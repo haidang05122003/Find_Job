@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { BookmarkIcon } from "@/icons";
 import { useParams, useRouter } from 'next/navigation';
 import JobDetailHeader from '@/components/job/JobDetailHeader';
 import JobDescription from '@/components/job/JobDescription';
@@ -23,6 +24,7 @@ const JobApplicationModal = dynamic(() => import('@/components/jobs/JobApplicati
 const ReportModal = dynamic(() => import('@/components/jobs/ReportModal'), { ssr: false });
 import type { Job } from '@/types/job';
 import type { Company } from '@/types/company';
+import { JobDetailSkeleton } from '@/components/jobs/JobDetailSkeleton';
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -115,15 +117,7 @@ export default function JobDetailPage() {
   };
 
   if (!job || !company) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('jobs.loading')}...
-          </h2>
-        </div>
-      </div>
-    );
+    return <JobDetailSkeleton />;
   }
 
   return (
@@ -217,14 +211,9 @@ export default function JobDetailPage() {
               className="flex h-12 w-12 items-center justify-center rounded-lg border border-gray-300 transition hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700 dark:hover:border-brand-500 dark:hover:bg-brand-500/10"
               aria-label="Bookmark"
             >
-              <svg
+              <BookmarkIcon
                 className={`h-6 w-6 ${isBookmarked ? 'fill-brand-500 text-brand-500' : 'text-gray-600 dark:text-gray-400'}`}
-                fill={isBookmarked ? 'currentColor' : 'none'}
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
+              />
             </button>
 
             <Button

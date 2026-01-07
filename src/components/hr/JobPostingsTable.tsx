@@ -6,6 +6,7 @@ import ComponentCard from "../common/ComponentCard";
 import { hrService, HRJobResponse } from "@/services/hr.service";
 import { useToast } from "@/context/ToastContext";
 import { PAGINATION } from "@/lib/constants";
+import ConfirmModal from "@/components/shared/ConfirmModal";
 
 const statusColor = (status: string) => {
   switch (status?.toUpperCase()) {
@@ -55,7 +56,14 @@ const JobPostingsTable: React.FC = () => {
     totalElements: 0,
   });
 
+  // Modal State
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; jobId: number | null }>({
+    isOpen: false,
+    jobId: null
+  });
+
   const fetchJobs = useCallback(async (pageIndex = 0) => {
+    // ... (fetch logic remains same)
     setLoading(true);
     try {
       const params: any = {
@@ -112,20 +120,29 @@ const JobPostingsTable: React.FC = () => {
     }
   };
 
-  const handleDelete = async (jobId: number) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa tin tuyển dụng này?")) return;
+  const openDeleteModal = (jobId: number) => {
+    setDeleteModal({ isOpen: true, jobId });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.jobId) return;
 
     try {
-      const response = await hrService.deleteJob(jobId);
+      const response = await hrService.deleteJob(deleteModal.jobId);
       if (response.success) {
         toastSuccess("Xóa tin tuyển dụng thành công");
         fetchJobs(pagination.page);
+      } else {
+        toastError("Không thể xóa tin tuyển dụng");
       }
     } catch (err) {
       toastError("Không thể xóa tin tuyển dụng");
+    } finally {
+      setDeleteModal({ isOpen: false, jobId: null });
     }
   };
 
+  // ... (formatDate remains same)
   const formatDate = (dateString: string) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
@@ -137,6 +154,7 @@ const JobPostingsTable: React.FC = () => {
       title="Tin tuyển dụng"
       desc="Quản lý danh sách tin tuyển dụng, trạng thái và số lượng ứng viên."
     >
+      {/* ... (Search bar and New Job button remain same - lines 140-170) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative">
           <input
@@ -211,6 +229,7 @@ const JobPostingsTable: React.FC = () => {
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {jobs.map((job) => (
                   <tr key={job.id} className="hover:bg-gray-50/60 dark:hover:bg-white/5">
+                    {/* ... (Columns remain same) */}
                     <td className="py-3">
                       <div>
                         <div className="font-medium text-gray-900 dark:text-white">
@@ -265,7 +284,7 @@ const JobPostingsTable: React.FC = () => {
                           </button>
                         ) : null}
                         <button
-                          onClick={() => handleDelete(job.id)}
+                          onClick={() => openDeleteModal(job.id)}
                           className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-red-600 hover:border-red-500 hover:bg-red-50 dark:border-gray-700 dark:text-red-400"
                         >
                           Xóa
@@ -305,6 +324,16 @@ const JobPostingsTable: React.FC = () => {
               </div>
             </div>
           )}
+
+          <ConfirmModal
+            isOpen={deleteModal.isOpen}
+            onClose={() => setDeleteModal({ isOpen: false, jobId: null })}
+            onConfirm={handleConfirmDelete}
+            title="Xóa tin tuyển dụng"
+            message="Bạn có chắc chắn muốn xóa tin tuyển dụng này? Hành động này không thể hoàn tác."
+            confirmText="Xóa vĩnh viễn"
+            variant="danger"
+          />
         </>
       )}
     </ComponentCard>

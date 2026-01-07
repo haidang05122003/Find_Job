@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { BookmarkIcon } from "@/icons";
 import { useRouter } from 'next/navigation';
 import Badge from '@/components/shared/Badge';
 import Button from '@/components/shared/Button';
@@ -138,14 +139,9 @@ const RelatedJobs: React.FC<RelatedJobsProps> = ({
                   className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 transition hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700 dark:hover:border-brand-500 dark:hover:bg-brand-500/10"
                   aria-label="Lưu công việc"
                 >
-                  <svg
+                  <BookmarkIcon
                     className={`h-5 w-5 ${job.isBookmarked ? 'fill-brand-500 text-brand-500' : 'text-gray-600 dark:text-gray-400'}`}
-                    fill={job.isBookmarked ? 'currentColor' : 'none'}
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                  </svg>
+                  />
                 </button>
                 <Button
                   size="sm"

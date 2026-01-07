@@ -97,7 +97,7 @@ export default function EmployerDetailPage() {
             <ol className="flex items-center space-x-2">
               <li><Link href="/" className="text-gray-500 hover:text-gray-700">Trang chủ</Link></li>
               <li><span className="text-gray-300">/</span></li>
-              <li><Link href="/companies" className="text-gray-500 hover:text-gray-700">Công ty</Link></li>
+              <li><Link href="/employers" className="text-gray-500 hover:text-gray-700">Công ty</Link></li>
               <li><span className="text-gray-300">/</span></li>
               <li className="text-brand-600 truncate max-w-[200px]">{company.name}</li>
             </ol>

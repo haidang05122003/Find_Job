@@ -11,7 +11,7 @@ import { hrService } from "@/services/hr.service";
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [companyStatus, setCompanyStatus] = useState<string | null>(null);
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
 
   const toggleDropdown = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -53,6 +53,15 @@ export default function UserDropdown() {
       : user?.avatarUrl
         ? `http://localhost:8080${user.avatarUrl}`
         : "/images/user/owner.jpg";
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-3 animate-pulse">
+        <div className="h-11 w-11 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+        <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded hidden sm:block"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">

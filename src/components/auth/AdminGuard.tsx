@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { usePathname, useRouter } from "next/navigation";
+import AdminSkeleton from "../admin/AdminSkeleton";
 
 export default function AdminGuard({ children }: { children: React.ReactNode }) {
     const { user, isLoading, isAuthenticated } = useAuth();
@@ -39,11 +40,7 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
     }, [isLoading, isAuthenticated, user, pathname, router]);
 
     if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-brand-500 border-t-transparent"></div>
-            </div>
-        );
+        return <AdminSkeleton />;
     }
 
     if (!authorized) {

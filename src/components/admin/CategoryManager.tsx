@@ -105,21 +105,15 @@ const CategoryManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Danh mục ngành nghề
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Quản lý danh sách ngành nghề hiển thị trên hệ thống.
-          </p>
-        </div>
-      </div>
 
-      <ComponentCard title="">
-        <div className="space-y-6 p-4">
+
+      <ComponentCard
+        title="Danh mục ngành nghề"
+        desc="Quản lý danh sách ngành nghề hiển thị trên hệ thống."
+      >
+        <div className="space-y-6">
           {/* Add Category Section */}
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col gap-3 sm:flex-row border-b border-gray-100 pb-6 dark:border-gray-800">
             <div className="flex-1">
               <input
                 type="text"
@@ -139,56 +133,74 @@ const CategoryManager: React.FC = () => {
             </button>
           </div>
 
-          {/* Category List */}
-          <div className="min-h-[300px]">
-            {loading ? (
-              <div className="flex h-40 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent"></div>
-              </div>
-            ) : categories.length === 0 ? (
-              <div className="flex h-40 flex-col items-center justify-center text-gray-500">
-                <p>Chưa có danh mục nào.</p>
-              </div>
-            ) : (
-              <div className="overflow-hidden rounded-xl border border-gray-100 dark:border-gray-800">
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {categories.map((cat) => (
-                    <div
+          {/* Category Table */}
+          <div className="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-800">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-gray-50/50 dark:bg-gray-800/50">
+                <tr className="border-b border-gray-100 dark:border-gray-800 text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">
+                  <th className="py-4 px-4 w-[10%]">ID</th>
+                  <th className="py-4 px-4 w-[50%]">Tên danh mục</th>
+                  <th className="py-4 px-4 w-[20%] text-center">Tin tuyển dụng</th>
+                  <th className="py-4 px-4 w-[20%] text-right pr-6">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="p-4"><div className="h-4 w-8 bg-gray-100 rounded" /></td>
+                      <td className="p-4"><div className="h-4 w-48 bg-gray-100 rounded" /></td>
+                      <td className="p-4 text-center"><div className="h-4 w-12 bg-gray-100 rounded mx-auto" /></td>
+                      <td className="p-4 text-right"><div className="h-8 w-16 bg-gray-100 rounded ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : categories.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="p-12 text-center text-gray-500">
+                      Chưa có danh mục nào.
+                    </td>
+                  </tr>
+                ) : (
+                  categories.map((cat) => (
+                    <tr
                       key={cat.id}
-                      className="group flex items-center justify-between bg-white p-4 transition-colors hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800"
+                      className="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                     >
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-white">
-                            {cat.name}
-                          </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            ID: {cat.id} • {cat.jobCount || 0} tin tuyển dụng
-                          </p>
+                      <td className="p-4 text-sm text-gray-500">#{cat.id}</td>
+                      <td className="p-4">
+                        <span className="font-medium text-gray-900 dark:text-white">{cat.name}</span>
+                        {cat.description && (
+                          <p className="text-xs text-gray-500 mt-1 line-clamp-1">{cat.description}</p>
+                        )}
+                      </td>
+                      <td className="p-4 text-center">
+                        <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
+                          {cat.jobCount || 0} tin
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2 pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => openEditModal(cat)}
+                            title="Chỉnh sửa"
+                            className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors border border-transparent hover:border-gray-200 dark:hover:bg-gray-800"
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(cat.id)}
+                            title="Xóa"
+                            className="p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100 dark:hover:bg-red-900/20"
+                          >
+                            <TrashBinIcon className="h-4 w-4" />
+                          </button>
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                        <button
-                          onClick={() => openEditModal(cat)}
-                          title="Chỉnh sửa"
-                          className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-brand-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-brand-400"
-                        >
-                          <PencilIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(cat.id)}
-                          title="Xóa"
-                          className="rounded-lg p-2 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                        >
-                          <TrashBinIcon className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
 
           {/* Pagination */}
